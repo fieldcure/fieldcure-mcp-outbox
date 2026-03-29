@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "outbox": {
+      "command": "dotnet",
+      "args": [
+        "run",
+        "--project",
+        "D:\\Codes\\fieldcure-mcp-outbox\\src\\FieldCure.Mcp.Outbox"
+      ]
+    }
+  }
+}
