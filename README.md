@@ -16,6 +16,17 @@ A multi-channel messaging [Model Context Protocol (MCP)](https://modelcontextpro
 - **Telegram Client API** — send to Saved Messages via WTelegramClient
 - **Stdio transport** — standard MCP subprocess model via JSON-RPC over stdin/stdout
 
+## Why Outbox?
+
+Existing MCP servers are channel-specific — one for Slack, another for Gmail, yet another for Telegram. Each requires separate installation, configuration, and the LLM must know which tool to call for each channel.
+
+Outbox takes a different approach:
+
+- **One tool, multiple channels** — `send_message` abstracts away channel differences. The LLM doesn't need to know Slack API vs SMTP vs Kakao REST.
+- **Credential isolation** — Secrets are entered through a separate console process and stored in Windows Credential Manager (DPAPI). They never flow through MCP stdio, so they're never visible to the LLM.
+- **Single install** — `dotnet tool install -g` gives you 4 channels. No need to install and configure separate servers per channel.
+- **KakaoTalk support** — Currently the only MCP server with KakaoTalk messaging, essential for Korean users.
+
 ## Installation
 
 ### dotnet tool (recommended)

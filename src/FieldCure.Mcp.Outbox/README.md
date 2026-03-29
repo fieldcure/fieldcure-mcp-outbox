@@ -1,6 +1,6 @@
 # FieldCure.Mcp.Outbox
 
-**Multi-channel messaging MCP server** — send messages through Slack, Telegram, Email (SMTP), and KakaoTalk from any MCP client. Secrets stored securely in Windows Credential Manager.
+**Multi-channel messaging MCP server** — send messages through Slack, Telegram, Email (SMTP), and KakaoTalk with a single `send_message` tool. One install, one interface, multiple channels. Secrets stored securely in Windows Credential Manager, never exposed to the LLM.
 
 ## Install
 
