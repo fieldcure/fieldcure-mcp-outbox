@@ -132,6 +132,8 @@ You will be prompted for:
 > **Note:** The bot must be invited to the channel before it can send messages.
 > Type `/invite @YourBotName` in the Slack channel.
 
+![Slack Setup](docs/setup-slack.png)
+
 ---
 
 ### Telegram
@@ -169,6 +171,8 @@ You will be prompted for:
 - **Verification code:** Enter the code sent to your Telegram app or via SMS
 
 A session file is created after successful authentication. Subsequent use does not require re-authentication.
+
+![Telegram Setup](docs/setup-telegram.png)
 
 ---
 
@@ -259,6 +263,8 @@ You will be prompted for:
 - **Username:** SMTP username
 - **Password:** SMTP password
 
+![SMTP Setup](docs/setup-smtp.png)
+
 ---
 
 ### KakaoTalk
@@ -306,6 +312,8 @@ After entering credentials:
 - Access tokens are automatically refreshed when expired
 - If the refresh token also expires, `send_message` will return an error
 - Re-run `add kakaotalk` to re-authorize
+
+![KakaoTalk Setup](docs/setup-kakaotalk.png)
 
 ## CLI Commands
 

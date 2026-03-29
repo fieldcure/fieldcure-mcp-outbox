@@ -53,7 +53,7 @@ public static class ConsoleHelper
             }
         }
 
-        return new string(input.ToArray());
+        return new string(input.ToArray()).Trim();
     }
 
     public static void PrintSuccess(string message)
