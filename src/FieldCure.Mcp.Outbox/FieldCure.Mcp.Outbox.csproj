@@ -22,6 +22,7 @@
     <PackageTags>mcp;messaging;slack;telegram;smtp;kakaotalk;outbox</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageIcon>Logo.png</PackageIcon>
+    <PackageReleaseNotes>v0.1.0: Initial release — Slack, Telegram, SMTP (Gmail/Outlook/M365/Naver), KakaoTalk channels with secure credential storage via Windows Credential Manager.</PackageReleaseNotes>
 
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>fieldcure-mcp-outbox</ToolCommandName>
