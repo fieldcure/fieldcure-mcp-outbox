@@ -6,8 +6,19 @@ using FieldCure.Mcp.Outbox.Configuration;
 
 namespace FieldCure.Mcp.Outbox.Setup;
 
+/// <summary>
+/// Interactive setup flow for adding a KakaoTalk channel via OAuth.
+/// </summary>
 public static class KakaoTalkSetup
 {
+    static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = true };
+
+    /// <summary>
+    /// Performs OAuth authorization and registers a new KakaoTalk channel.
+    /// </summary>
+    /// <param name="store">The channel store for persistence.</param>
+    /// <param name="credentials">The credential manager for storing API keys.</param>
+    /// <param name="name">Optional display name override.</param>
     public static async Task RunAsync(ChannelStore store, CredentialManager credentials, string? name)
     {
         ConsoleHelper.PrintHeader("Add KakaoTalk Channel");
@@ -115,7 +126,7 @@ public static class KakaoTalkSetup
                 : null,
         };
 
-        var tokenDataJson = JsonSerializer.Serialize(tokenData, new JsonSerializerOptions { WriteIndented = true });
+        var tokenDataJson = JsonSerializer.Serialize(tokenData, JsonOptions);
         await File.WriteAllTextAsync(tokenFilePath, tokenDataJson);
 
         Console.WriteLine("Token received and saved.");
@@ -137,8 +148,14 @@ public static class KakaoTalkSetup
     }
 }
 
+/// <summary>
+/// Utility for finding an available TCP port on localhost.
+/// </summary>
 internal static class TcpPortFinder
 {
+    /// <summary>
+    /// Finds and returns an available TCP port on the loopback interface.
+    /// </summary>
     public static int FindAvailablePort()
     {
         var listener = new System.Net.Sockets.TcpListener(IPAddress.Loopback, 0);

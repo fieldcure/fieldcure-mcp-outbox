@@ -6,6 +6,9 @@ using ModelContextProtocol.Server;
 
 namespace FieldCure.Mcp.Outbox.Tools;
 
+/// <summary>
+/// MCP tool that adds a new messaging channel via an interactive setup console.
+/// </summary>
 [McpServerToolType]
 public static class AddChannelTool
 {

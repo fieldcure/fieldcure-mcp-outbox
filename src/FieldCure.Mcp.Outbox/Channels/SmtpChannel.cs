@@ -4,6 +4,9 @@ using MimeKit;
 
 namespace FieldCure.Mcp.Outbox.Channels;
 
+/// <summary>
+/// Sends email messages via SMTP using MailKit.
+/// </summary>
 public class SmtpChannel : IChannel
 {
     readonly string _from;
@@ -13,10 +16,24 @@ public class SmtpChannel : IChannel
     readonly string _username;
     readonly string _password;
 
+    /// <inheritdoc />
     public string Id { get; }
+    /// <inheritdoc />
     public string Type => "smtp";
+    /// <inheritdoc />
     public string Name { get; }
 
+    /// <summary>
+    /// Initializes a new SMTP channel.
+    /// </summary>
+    /// <param name="id">Unique channel identifier.</param>
+    /// <param name="name">Display name.</param>
+    /// <param name="from">Sender email address.</param>
+    /// <param name="host">SMTP server hostname.</param>
+    /// <param name="port">SMTP server port.</param>
+    /// <param name="useSsl">Whether to use SSL/TLS.</param>
+    /// <param name="username">SMTP authentication username.</param>
+    /// <param name="password">SMTP authentication password.</param>
     public SmtpChannel(string id, string name, string from, string host, int port, bool useSsl,
         string username, string password)
     {
@@ -30,6 +47,7 @@ public class SmtpChannel : IChannel
         _password = password;
     }
 
+    /// <inheritdoc />
     public async Task<SendResult> SendAsync(SendRequest request, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(request.To))

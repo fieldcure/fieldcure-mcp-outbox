@@ -6,6 +6,9 @@ using ModelContextProtocol.Server;
 
 namespace FieldCure.Mcp.Outbox.Tools;
 
+/// <summary>
+/// MCP tool that sends a message through a configured channel.
+/// </summary>
 [McpServerToolType]
 public static class SendMessageTool
 {

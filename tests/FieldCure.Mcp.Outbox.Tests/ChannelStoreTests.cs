@@ -2,6 +2,9 @@ using FieldCure.Mcp.Outbox.Configuration;
 
 namespace FieldCure.Mcp.Outbox.Tests;
 
+/// <summary>
+/// Tests for <see cref="ChannelStore"/> persistence operations.
+/// </summary>
 [TestClass]
 public class ChannelStoreTests
 {

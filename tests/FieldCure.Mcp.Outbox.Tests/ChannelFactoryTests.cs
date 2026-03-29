@@ -3,6 +3,9 @@ using FieldCure.Mcp.Outbox.Configuration;
 
 namespace FieldCure.Mcp.Outbox.Tests;
 
+/// <summary>
+/// Tests for <see cref="ChannelFactory"/> channel creation logic.
+/// </summary>
 [TestClass]
 public class ChannelFactoryTests
 {

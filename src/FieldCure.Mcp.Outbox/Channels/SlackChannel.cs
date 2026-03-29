@@ -3,16 +3,30 @@ using System.Text.Json;
 
 namespace FieldCure.Mcp.Outbox.Channels;
 
+/// <summary>
+/// Sends messages to Slack using the Bot Token and chat.postMessage API.
+/// </summary>
 public class SlackChannel : IChannel
 {
     readonly string _botToken;
     readonly string _defaultChannel;
     readonly HttpClient _httpClient;
 
+    /// <inheritdoc />
     public string Id { get; }
+    /// <inheritdoc />
     public string Type => "slack";
+    /// <inheritdoc />
     public string Name { get; }
 
+    /// <summary>
+    /// Initializes a new Slack channel.
+    /// </summary>
+    /// <param name="id">Unique channel identifier.</param>
+    /// <param name="name">Display name.</param>
+    /// <param name="defaultChannel">Default Slack channel to post to.</param>
+    /// <param name="botToken">Slack bot token (xoxb-...).</param>
+    /// <param name="httpClient">HTTP client for API calls.</param>
     public SlackChannel(string id, string name, string defaultChannel, string botToken, HttpClient httpClient)
     {
         Id = id;
@@ -22,6 +36,7 @@ public class SlackChannel : IChannel
         _httpClient = httpClient;
     }
 
+    /// <inheritdoc />
     public async Task<SendResult> SendAsync(SendRequest request, CancellationToken cancellationToken = default)
     {
         var channel = request.TargetChannel ?? _defaultChannel;

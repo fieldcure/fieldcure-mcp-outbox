@@ -6,6 +6,9 @@ using ModelContextProtocol.Server;
 
 namespace FieldCure.Mcp.Outbox.Tools;
 
+/// <summary>
+/// MCP tool that removes a configured messaging channel and its credentials.
+/// </summary>
 [McpServerToolType]
 public static class RemoveChannelTool
 {

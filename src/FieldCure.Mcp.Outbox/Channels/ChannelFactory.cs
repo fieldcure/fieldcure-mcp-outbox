@@ -2,8 +2,17 @@ using FieldCure.Mcp.Outbox.Configuration;
 
 namespace FieldCure.Mcp.Outbox.Channels;
 
+/// <summary>
+/// Creates channel instances from stored metadata and credentials.
+/// </summary>
 public static class ChannelFactory
 {
+    /// <summary>
+    /// Creates an <see cref="IChannel"/> instance for the given channel metadata.
+    /// </summary>
+    /// <param name="metadata">The channel metadata describing the channel type and configuration.</param>
+    /// <param name="credentials">The credential manager for retrieving stored secrets.</param>
+    /// <param name="httpClientFactory">The HTTP client factory for channels that require HTTP access.</param>
     public static IChannel Create(
         ChannelMetadata metadata,
         CredentialManager credentials,
@@ -19,6 +28,9 @@ public static class ChannelFactory
         };
     }
 
+    /// <summary>
+    /// Creates a Slack channel from metadata and credentials.
+    /// </summary>
     static SlackChannel CreateSlack(ChannelMetadata metadata, CredentialManager credentials,
         IHttpClientFactory httpClientFactory)
     {
@@ -33,6 +45,9 @@ public static class ChannelFactory
             httpClientFactory.CreateClient());
     }
 
+    /// <summary>
+    /// Creates a Telegram channel from metadata and credentials.
+    /// </summary>
     static TelegramChannel CreateTelegram(ChannelMetadata metadata, CredentialManager credentials)
     {
         var apiCredential = credentials.Retrieve($"FieldCure.Outbox:{metadata.Id}:api")
@@ -54,6 +69,9 @@ public static class ChannelFactory
         return new TelegramChannel(metadata.Id, metadata.Name, parts[0], parts[1], phone, sessionPath);
     }
 
+    /// <summary>
+    /// Creates an SMTP channel from metadata and credentials.
+    /// </summary>
     static SmtpChannel CreateSmtp(ChannelMetadata metadata, CredentialManager credentials)
     {
         var password = credentials.Retrieve($"FieldCure.Outbox:{metadata.Id}")
@@ -70,6 +88,9 @@ public static class ChannelFactory
             password);
     }
 
+    /// <summary>
+    /// Creates a KakaoTalk channel from metadata and credentials.
+    /// </summary>
     static KakaoTalkChannel CreateKakaoTalk(ChannelMetadata metadata, CredentialManager credentials,
         IHttpClientFactory httpClientFactory)
     {

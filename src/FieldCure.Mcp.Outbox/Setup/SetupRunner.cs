@@ -2,6 +2,9 @@ using FieldCure.Mcp.Outbox.Configuration;
 
 namespace FieldCure.Mcp.Outbox.Setup;
 
+/// <summary>
+/// Dispatches CLI commands for adding, listing, and removing channels.
+/// </summary>
 public static class SetupRunner
 {
     static readonly HashSet<string> ValidTypes = new(StringComparer.OrdinalIgnoreCase)
@@ -9,6 +12,10 @@ public static class SetupRunner
         "slack", "telegram", "gmail", "outlook", "microsoft365", "naver", "smtp", "kakaotalk"
     };
 
+    /// <summary>
+    /// Runs the interactive channel setup flow for the given type.
+    /// </summary>
+    /// <param name="args">CLI arguments: type [--name name].</param>
     public static async Task<int> RunAddAsync(string[] args)
     {
         if (args.Length == 0)
@@ -73,6 +80,9 @@ public static class SetupRunner
         }
     }
 
+    /// <summary>
+    /// Lists all configured channels in a tabular format.
+    /// </summary>
     public static async Task<int> RunListAsync()
     {
         var store = new ChannelStore();
@@ -95,6 +105,10 @@ public static class SetupRunner
         return 0;
     }
 
+    /// <summary>
+    /// Removes a channel by ID, cleaning up credentials and session files.
+    /// </summary>
+    /// <param name="args">CLI arguments: channel-id.</param>
     public static async Task<int> RunRemoveAsync(string[] args)
     {
         if (args.Length == 0)
@@ -126,6 +140,9 @@ public static class SetupRunner
         return 0;
     }
 
+    /// <summary>
+    /// Deletes stored credentials for a channel based on its type.
+    /// </summary>
     internal static void DeleteChannelCredentials(CredentialManager credentials, ChannelMetadata channel)
     {
         switch (channel.Type)
@@ -146,6 +163,9 @@ public static class SetupRunner
         }
     }
 
+    /// <summary>
+    /// Deletes session or token files associated with a channel.
+    /// </summary>
     internal static void DeleteChannelFiles(ChannelStore store, ChannelMetadata channel)
     {
         switch (channel.Type)

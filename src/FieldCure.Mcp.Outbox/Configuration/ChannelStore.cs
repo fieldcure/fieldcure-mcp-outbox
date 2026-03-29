@@ -3,6 +3,9 @@ using System.Text.Json.Serialization;
 
 namespace FieldCure.Mcp.Outbox.Configuration;
 
+/// <summary>
+/// Manages persistence of channel metadata to a JSON file on disk.
+/// </summary>
 public class ChannelStore
 {
     static readonly JsonSerializerOptions JsonOptions = new()
@@ -23,6 +26,9 @@ public class ChannelStore
             "FieldCure", "Mcp.Outbox");
     }
 
+    /// <summary>
+    /// Loads all channel metadata from disk.
+    /// </summary>
     public async Task<List<ChannelMetadata>> LoadAsync()
     {
         if (!File.Exists(ChannelsFilePath))
@@ -33,6 +39,10 @@ public class ChannelStore
         return data?.Channels ?? [];
     }
 
+    /// <summary>
+    /// Saves all channel metadata to disk atomically.
+    /// </summary>
+    /// <param name="channels">The full list of channel metadata to persist.</param>
     public async Task SaveAsync(List<ChannelMetadata> channels)
     {
         Directory.CreateDirectory(DataDirectory);
@@ -46,12 +56,20 @@ public class ChannelStore
         File.Move(tempPath, ChannelsFilePath, overwrite: true);
     }
 
+    /// <summary>
+    /// Retrieves a single channel by its unique identifier.
+    /// </summary>
+    /// <param name="id">The channel identifier to look up.</param>
     public async Task<ChannelMetadata?> GetByIdAsync(string id)
     {
         var channels = await LoadAsync();
         return channels.Find(c => c.Id == id);
     }
 
+    /// <summary>
+    /// Appends a new channel to the store and persists it.
+    /// </summary>
+    /// <param name="channel">The channel metadata to add.</param>
     public async Task AddAsync(ChannelMetadata channel)
     {
         var channels = await LoadAsync();
@@ -59,6 +77,10 @@ public class ChannelStore
         await SaveAsync(channels);
     }
 
+    /// <summary>
+    /// Removes a channel by its identifier and persists the change.
+    /// </summary>
+    /// <param name="id">The channel identifier to remove.</param>
     public async Task RemoveAsync(string id)
     {
         var channels = await LoadAsync();
@@ -67,11 +89,17 @@ public class ChannelStore
     }
 }
 
+/// <summary>
+/// Root object for the channels.json file.
+/// </summary>
 public class ChannelsFile
 {
     public List<ChannelMetadata> Channels { get; set; } = [];
 }
 
+/// <summary>
+/// Stores configuration metadata for a messaging channel.
+/// </summary>
 public class ChannelMetadata
 {
     public required string Id { get; set; }

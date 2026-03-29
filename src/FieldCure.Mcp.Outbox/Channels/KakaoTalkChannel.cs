@@ -1,19 +1,37 @@
 using System.Net.Http.Headers;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace FieldCure.Mcp.Outbox.Channels;
 
+/// <summary>
+/// Sends messages to KakaoTalk using the Kakao REST API with OAuth token management.
+/// </summary>
 public class KakaoTalkChannel : IChannel
 {
+    static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = true };
+
     readonly string _apiKey;
     readonly string? _clientSecret;
     readonly string _tokenFilePath;
     readonly HttpClient _httpClient;
 
+    /// <inheritdoc />
     public string Id { get; }
+    /// <inheritdoc />
     public string Type => "kakaotalk";
+    /// <inheritdoc />
     public string Name { get; }
 
+    /// <summary>
+    /// Initializes a new KakaoTalk channel.
+    /// </summary>
+    /// <param name="id">Unique channel identifier.</param>
+    /// <param name="name">Display name.</param>
+    /// <param name="apiKey">Kakao REST API key.</param>
+    /// <param name="clientSecret">Kakao client secret (optional).</param>
+    /// <param name="tokenFilePath">File path for persisted OAuth tokens.</param>
+    /// <param name="httpClient">HTTP client for API calls.</param>
     public KakaoTalkChannel(string id, string name, string apiKey, string? clientSecret,
         string tokenFilePath, HttpClient httpClient)
     {
@@ -25,6 +43,7 @@ public class KakaoTalkChannel : IChannel
         _httpClient = httpClient;
     }
 
+    /// <inheritdoc />
     public async Task<SendResult> SendAsync(SendRequest request, CancellationToken cancellationToken = default)
     {
         try
@@ -70,6 +89,9 @@ public class KakaoTalkChannel : IChannel
         }
     }
 
+    /// <summary>
+    /// Returns a valid access token, refreshing it if expired.
+    /// </summary>
     async Task<string?> GetValidAccessTokenAsync(CancellationToken cancellationToken)
     {
         if (!File.Exists(_tokenFilePath))
@@ -108,6 +130,9 @@ public class KakaoTalkChannel : IChannel
         return tokenData.AccessToken;
     }
 
+    /// <summary>
+    /// Exchanges a refresh token for a new access token via the Kakao OAuth endpoint.
+    /// </summary>
     async Task<KakaoTokenResponse?> RefreshTokenAsync(string refreshToken, CancellationToken cancellationToken)
     {
         var parameters = new Dictionary<string, string>
@@ -133,19 +158,25 @@ public class KakaoTalkChannel : IChannel
         return JsonSerializer.Deserialize<KakaoTokenResponse>(json);
     }
 
+    /// <summary>
+    /// Persists token data to disk atomically.
+    /// </summary>
     async Task SaveTokenDataAsync(KakaoTokenData tokenData, CancellationToken cancellationToken)
     {
         var dir = Path.GetDirectoryName(_tokenFilePath);
         if (dir != null)
             Directory.CreateDirectory(dir);
 
-        var json = JsonSerializer.Serialize(tokenData, new JsonSerializerOptions { WriteIndented = true });
+        var json = JsonSerializer.Serialize(tokenData, JsonOptions);
         var tempPath = _tokenFilePath + ".tmp";
         await File.WriteAllTextAsync(tempPath, json, cancellationToken);
         File.Move(tempPath, _tokenFilePath, overwrite: true);
     }
 }
 
+/// <summary>
+/// Persisted KakaoTalk OAuth token data.
+/// </summary>
 public class KakaoTokenData
 {
     public string AccessToken { get; set; } = string.Empty;
@@ -154,17 +185,23 @@ public class KakaoTokenData
     public DateTime? RefreshTokenExpiresAt { get; set; }
 }
 
+/// <summary>
+/// Deserialized response from the Kakao OAuth token endpoint.
+/// </summary>
 public class KakaoTokenResponse
 {
-    public string access_token { get; set; } = string.Empty;
-    public string? token_type { get; set; }
-    public string? refresh_token { get; set; }
-    public int expires_in { get; set; }
-    public int refresh_token_expires_in { get; set; }
+    [JsonPropertyName("access_token")]
+    public string AccessToken { get; set; } = string.Empty;
 
-    // Map to PascalCase for internal use
-    public string AccessToken => access_token;
-    public string? RefreshToken => refresh_token;
-    public int ExpiresIn => expires_in;
-    public int RefreshTokenExpiresIn => refresh_token_expires_in;
+    [JsonPropertyName("token_type")]
+    public string? TokenType { get; set; }
+
+    [JsonPropertyName("refresh_token")]
+    public string? RefreshToken { get; set; }
+
+    [JsonPropertyName("expires_in")]
+    public int ExpiresIn { get; set; }
+
+    [JsonPropertyName("refresh_token_expires_in")]
+    public int RefreshTokenExpiresIn { get; set; }
 }

@@ -1,7 +1,16 @@
 namespace FieldCure.Mcp.Outbox.Configuration;
 
+/// <summary>
+/// Represents preconfigured SMTP server settings for a known provider.
+/// </summary>
+/// <param name="Host">SMTP server hostname.</param>
+/// <param name="Port">SMTP server port.</param>
+/// <param name="UseSsl">Whether to use SSL on connect.</param>
 public record SmtpPreset(string Host, int Port, bool UseSsl);
 
+/// <summary>
+/// Provides preconfigured SMTP settings for common email providers.
+/// </summary>
 public static class SmtpPresets
 {
     static readonly Dictionary<string, SmtpPreset> Presets = new(StringComparer.OrdinalIgnoreCase)

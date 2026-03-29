@@ -2,8 +2,17 @@ using FieldCure.Mcp.Outbox.Configuration;
 
 namespace FieldCure.Mcp.Outbox.Setup;
 
+/// <summary>
+/// Interactive setup flow for adding a Telegram channel.
+/// </summary>
 public static class TelegramSetup
 {
+    /// <summary>
+    /// Prompts for API credentials, authenticates with Telegram, and registers the channel.
+    /// </summary>
+    /// <param name="store">The channel store for persistence.</param>
+    /// <param name="credentials">The credential manager for storing API credentials.</param>
+    /// <param name="name">Optional display name override.</param>
     public static async Task RunAsync(ChannelStore store, CredentialManager credentials, string? name)
     {
         ConsoleHelper.PrintHeader("Add Telegram Channel");
@@ -89,12 +98,18 @@ public static class TelegramSetup
         ConsoleHelper.WaitForKey();
     }
 
+    /// <summary>
+    /// Prompts the user for the SMS verification code.
+    /// </summary>
     static string PromptVerificationCode()
     {
         Console.WriteLine("Verification code sent via SMS.");
         return ConsoleHelper.ReadLine("Code");
     }
 
+    /// <summary>
+    /// Prompts the user for the two-factor authentication password.
+    /// </summary>
     static string PromptTwoFactorPassword()
     {
         return ConsoleHelper.ReadMasked("Two-factor password");

@@ -2,6 +2,9 @@ using FieldCure.Mcp.Outbox.Configuration;
 
 namespace FieldCure.Mcp.Outbox.Tests;
 
+/// <summary>
+/// Tests for <see cref="SmtpPresets"/> provider lookup behavior.
+/// </summary>
 [TestClass]
 public class SmtpPresetsTests
 {

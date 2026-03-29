@@ -6,7 +6,8 @@
         "run",
         "--project",
         "D:\\Codes\\fieldcure-mcp-outbox\\src\\FieldCure.Mcp.Outbox"
-      ]
+      ],
+      "disabled": true
     }
   }
 }

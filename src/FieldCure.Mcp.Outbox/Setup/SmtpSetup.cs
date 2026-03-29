@@ -2,6 +2,9 @@ using FieldCure.Mcp.Outbox.Configuration;
 
 namespace FieldCure.Mcp.Outbox.Setup;
 
+/// <summary>
+/// Interactive setup flow for adding an SMTP email channel.
+/// </summary>
 public static class SmtpSetup
 {
     static readonly (string Key, string Label, string Host)[] Providers =
@@ -12,10 +15,16 @@ public static class SmtpSetup
         ("naver", "Naver", "smtp.naver.com"),
     ];
 
+    /// <summary>
+    /// Prompts for SMTP settings and credentials, then registers the channel.
+    /// </summary>
+    /// <param name="store">The channel store for persistence.</param>
+    /// <param name="credentials">The credential manager for storing the password.</param>
     /// <param name="providerShortcut">
     /// null = show provider selection menu (add smtp),
     /// "gmail"/"outlook"/etc. = skip menu and use preset directly (add gmail shortcut).
     /// </param>
+    /// <param name="name">Optional display name override.</param>
     public static async Task RunAsync(
         ChannelStore store, CredentialManager credentials, string? providerShortcut, string? name)
     {

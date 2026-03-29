@@ -5,6 +5,9 @@ using ModelContextProtocol.Server;
 
 namespace FieldCure.Mcp.Outbox.Tools;
 
+/// <summary>
+/// MCP tool that lists all configured messaging channels.
+/// </summary>
 [McpServerToolType]
 public static class ListChannelsTool
 {
