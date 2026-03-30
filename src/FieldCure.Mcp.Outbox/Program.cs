@@ -1,3 +1,4 @@
+﻿using System.Reflection;
 using System.Text;
 using FieldCure.Mcp.Outbox.Configuration;
 using FieldCure.Mcp.Outbox.Setup;
@@ -5,10 +6,11 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
-Console.OutputEncoding = Encoding.UTF8;
-
 if (args.Length > 0)
 {
+    // CLI mode: set UTF-8 for Korean output in console window
+    Console.OutputEncoding = Encoding.UTF8;
+
     return args[0].ToLowerInvariant() switch
     {
         "add" => await SetupRunner.RunAddAsync(args[1..]),
