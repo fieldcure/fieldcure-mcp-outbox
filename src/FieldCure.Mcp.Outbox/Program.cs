@@ -38,7 +38,9 @@ builder.Services
         options.ServerInfo = new()
         {
             Name = "fieldcure-mcp-outbox",
-            Version = "0.1.0",
+            Version = typeof(Program).Assembly
+                .GetCustomAttribute<System.Reflection.AssemblyInformationalVersionAttribute>()
+                ?.InformationalVersion ?? "0.0.0",
         };
     })
     .WithStdioServerTransport()
