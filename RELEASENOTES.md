@@ -1,5 +1,11 @@
 # Release Notes
 
+## v0.2.0 (2026-03-30)
+
+- **Fix: stdio transport corruption** — move `Console.OutputEncoding = UTF8` to CLI mode only; was corrupting MCP JSON-RPC responses when set before server startup
+- **Fix: ServerInfo.Version from assembly** — derive version from `AssemblyInformationalVersionAttribute` instead of hardcoding, so handshake reports the correct NuGet version
+- **CI** — add GitHub Actions build & test workflow
+
 ## v0.1.0 (2026-03-29)
 
 Initial release.
