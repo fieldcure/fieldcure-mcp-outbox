@@ -77,14 +77,22 @@ public static class ChannelFactory
         var password = credentials.Retrieve($"FieldCure.Outbox:{metadata.Id}")
             ?? throw new InvalidOperationException($"Password not found for channel '{metadata.Id}'.");
 
+        var from = metadata.From
+            ?? throw new InvalidOperationException($"'from' address not set for channel '{metadata.Id}'.");
+
+        // Naver SMTP requires the Naver ID (without @naver.com) as username
+        var username = metadata.Provider == "naver" && from.Contains('@')
+            ? from[..from.IndexOf('@')]
+            : from;
+
         return new SmtpChannel(
             metadata.Id,
             metadata.Name,
-            metadata.From ?? throw new InvalidOperationException($"'from' address not set for channel '{metadata.Id}'."),
+            from,
             metadata.Host ?? throw new InvalidOperationException($"SMTP host not set for channel '{metadata.Id}'."),
             metadata.Port ?? 587,
             metadata.Tls ?? true,
-            metadata.From,
+            username,
             password);
     }
 

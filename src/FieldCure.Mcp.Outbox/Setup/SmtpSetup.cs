@@ -108,7 +108,10 @@ public static class SmtpSetup
                 return;
             }
 
-            Console.WriteLine("  Hint: App password format is [xxxx xxxx xxxx xxxx]");
+            var hint = provider == "naver"
+                ? "  Hint: App password format is [XXXXXXXXXXXX] (12 uppercase letters and digits)"
+                : "  Hint: App password format is [xxxx xxxx xxxx xxxx]";
+            Console.WriteLine(hint);
             password = ConsoleHelper.ReadMasked("App password");
             if (string.IsNullOrWhiteSpace(password))
             {

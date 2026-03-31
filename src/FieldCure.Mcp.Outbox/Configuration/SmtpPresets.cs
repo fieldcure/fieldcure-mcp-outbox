@@ -18,7 +18,7 @@ public static class SmtpPresets
         ["gmail"] = new("smtp.gmail.com", 587, false),
         ["outlook"] = new("smtp-mail.outlook.com", 587, false),
         ["microsoft365"] = new("smtp.office365.com", 587, false),
-        ["naver"] = new("smtp.naver.com", 587, false),
+        ["naver"] = new("smtp.naver.com", 465, true),
     };
 
     /// <summary>
