@@ -187,9 +187,9 @@ A session file is created after successful authentication. Subsequent use does n
 
 ---
 
-### SMTP (Email)
+### Email
 
-**What it does:** Sends emails via SMTP. Supports Gmail, Outlook, Microsoft 365, Naver, and custom SMTP servers.
+**What it does:** Sends emails via SMTP (Gmail, Naver, Custom) or Microsoft Graph API (Outlook / Microsoft 365).
 
 **Add Channel:**
 
@@ -202,19 +202,16 @@ A provider menu will be displayed:
 ```
 Select provider:
   1. Gmail          (smtp.gmail.com)
-  2. Outlook        (smtp-mail.outlook.com)
-  3. Microsoft 365  (smtp.office365.com)
-  4. Naver          (smtp.naver.com)
-  5. Custom
+  2. Naver          (smtp.naver.com)
+  3. Custom
 ```
 
 You can also use shortcut commands:
 
 ```bash
 fieldcure-mcp-outbox add gmail
-fieldcure-mcp-outbox add outlook
-fieldcure-mcp-outbox add microsoft365
 fieldcure-mcp-outbox add naver
+fieldcure-mcp-outbox add microsoft
 ```
 
 #### Gmail
@@ -235,29 +232,36 @@ You will be prompted for:
 - **Gmail address:** Your Gmail email address
 - **App password:** The 16-character app password
 
-#### Outlook (Personal)
+#### Outlook / Microsoft 365
 
-> **Note:** This provider has not been fully verified yet. If you encounter issues, please [open an issue](https://github.com/fieldcure/fieldcure-mcp-outbox/issues).
+> **Note:** Microsoft has [deprecated basic authentication](https://learn.microsoft.com/en-us/exchange/clients-and-mobile-in-exchange-online/deprecation-of-basic-authentication-exchange-online) for SMTP. This provider uses **Microsoft Graph API** with OAuth 2.0 instead of SMTP.
 
-For personal accounts (@outlook.com, @hotmail.com, @live.com).
+For both personal accounts (@outlook.com, @hotmail.com, @live.com) and business/organization Microsoft 365 accounts.
 
-Uses `smtp-mail.outlook.com:587` with STARTTLS.
+**Prerequisites:**
+1. A Microsoft account (personal or work/school)
+2. An Azure Entra ID app registration with **Mail.Send** permission
+
+**Setting up Azure Entra ID App:**
+1. Go to [entra.microsoft.com](https://entra.microsoft.com) → **Entra ID** → **앱 등록** → **새 등록**
+2. Enter a name (e.g. `outbox`)
+3. Under **지원되는 계정 유형**, select **모든 Entra ID 테넌트 + 개인 Microsoft 계정** (to support both personal and work accounts)
+4. Under **리디렉션 URI**, select **웹** and enter `http://localhost:9876/callback`
+5. Click **등록**
+6. Note the **애플리케이션(클라이언트) ID** on the overview page
+7. Go to **API 사용 권한** → **권한 추가** → **Microsoft Graph** → **위임된 권한** → search `Mail.Send` → check it → **권한 추가**
+8. Go to **인증서 및 암호** → **새 클라이언트 비밀** → enter a description → **추가** → copy the **값(Value)** (shown only once)
+
+**Add Channel:**
+
+```bash
+fieldcure-mcp-outbox add microsoft
+```
 
 You will be prompted for:
-- **Email address:** Your Outlook email address
-- **App password:** Your app password or account password
-
-#### Microsoft 365 (Business)
-
-> **Note:** This provider has not been fully verified yet. If you encounter issues, please [open an issue](https://github.com/fieldcure/fieldcure-mcp-outbox/issues).
-
-For business/organization Microsoft 365 accounts.
-
-Uses `smtp.office365.com:587` with STARTTLS.
-
-You will be prompted for:
-- **Email address:** Your work email address
-- **App password:** Your app password
+- **Client ID:** The application (client) ID from step 6
+- **Client Secret:** The client secret value from step 8
+- A browser window will open for Microsoft sign-in and consent
 
 #### Naver
 
