@@ -1,6 +1,6 @@
 # FieldCure.Mcp.Outbox
 
-**Multi-channel messaging MCP server** — send messages through Slack, Telegram, Email (SMTP), and KakaoTalk with a single `send_message` tool. One install, one interface, multiple channels. Secrets stored securely in Windows Credential Manager, never exposed to the LLM.
+**Multi-channel messaging MCP server** — send messages through Slack, Telegram, Email (Gmail, Naver, Microsoft Graph API), and KakaoTalk with a single `send_message` tool. One install, one interface, multiple channels. Secrets stored securely in Windows Credential Manager, never exposed to the LLM.
 
 ## Install
 
@@ -65,9 +65,8 @@ Add to `.vscode/mcp.json`:
 | **Slack** | Web API (`chat.postMessage`) | Bot Token |
 | **Telegram** | Client API (WTelegramClient) | API ID + Hash + SMS |
 | **Gmail** | SMTP (smtp.gmail.com:587) | App password |
-| **Outlook** | SMTP (smtp-mail.outlook.com:587) | App password *(unverified)* |
-| **Microsoft 365** | SMTP (smtp.office365.com:587) | App password *(unverified)* |
 | **Naver** | SMTP (smtp.naver.com:465) | App password |
+| **Microsoft** | Graph API (`/me/sendMail`) | OAuth 2.0 |
 | **Custom SMTP** | User-defined SMTP server | Username + password |
 | **KakaoTalk** | Kakao REST API | OAuth 2.0 |
 
