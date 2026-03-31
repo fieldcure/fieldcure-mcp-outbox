@@ -3,15 +3,16 @@
 [![NuGet](https://img.shields.io/nuget/v/FieldCure.Mcp.Outbox)](https://www.nuget.org/packages/FieldCure.Mcp.Outbox)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/fieldcure/fieldcure-mcp-outbox/blob/main/LICENSE)
 
-A multi-channel messaging [Model Context Protocol (MCP)](https://modelcontextprotocol.io) server that sends messages through Slack, Telegram, Email (SMTP), and KakaoTalk. Built with C# and the official [MCP C# SDK](https://github.com/modelcontextprotocol/csharp-sdk).
+A multi-channel messaging [Model Context Protocol (MCP)](https://modelcontextprotocol.io) server that sends messages through Slack, Telegram, Email (Gmail, Naver, Microsoft Graph API), and KakaoTalk. Built with C# and the official [MCP C# SDK](https://github.com/modelcontextprotocol/csharp-sdk).
 
 ## Features
 
-- **4 messaging channels** — Slack, Telegram, SMTP (Gmail, Outlook, Microsoft 365, Naver), KakaoTalk
+- **5 messaging channels** — Slack, Telegram, SMTP (Gmail, Naver), Microsoft Graph API (Outlook / M365), KakaoTalk
 - **4 MCP tools** — `list_channels`, `add_channel`, `send_message`, `remove_channel`
 - **Secure credential storage** — secrets stored in Windows Credential Manager (DPAPI), never exposed to LLM
 - **CLI channel setup** — interactive console for credential entry, launched as a subprocess
-- **SMTP presets** — Gmail, Outlook, Microsoft 365, Naver with one-command setup
+- **SMTP presets** — Gmail, Naver with one-command setup
+- **Microsoft Graph API** — OAuth 2.0 browser flow for Outlook / M365 email with automatic token refresh
 - **KakaoTalk OAuth** — localhost callback flow with automatic token refresh
 - **Telegram Client API** — send to Saved Messages via WTelegramClient
 - **Stdio transport** — standard MCP subprocess model via JSON-RPC over stdin/stdout
@@ -191,7 +192,7 @@ A session file is created after successful authentication. Subsequent use does n
 
 **What it does:** Sends emails via SMTP (Gmail, Naver, Custom) or Microsoft Graph API (Outlook / Microsoft 365).
 
-**Add Channel:**
+**Add Channel (SMTP):**
 
 ```bash
 fieldcure-mcp-outbox add smtp
@@ -211,6 +212,11 @@ You can also use shortcut commands:
 ```bash
 fieldcure-mcp-outbox add gmail
 fieldcure-mcp-outbox add naver
+```
+
+**Add Channel (Microsoft Graph API):**
+
+```bash
 fieldcure-mcp-outbox add microsoft
 ```
 
@@ -369,10 +375,9 @@ fieldcure-mcp-outbox                      # Start MCP server (stdio)
 fieldcure-mcp-outbox add slack            # Add Slack channel
 fieldcure-mcp-outbox add telegram         # Add Telegram channel
 fieldcure-mcp-outbox add gmail            # Add Gmail SMTP channel
-fieldcure-mcp-outbox add outlook          # Add Outlook SMTP channel
-fieldcure-mcp-outbox add microsoft365     # Add Microsoft 365 SMTP channel
 fieldcure-mcp-outbox add naver            # Add Naver SMTP channel
 fieldcure-mcp-outbox add smtp             # Add custom SMTP channel
+fieldcure-mcp-outbox add microsoft        # Add Microsoft (Outlook/M365) channel
 fieldcure-mcp-outbox add kakaotalk        # Add KakaoTalk channel
 fieldcure-mcp-outbox list                 # List configured channels
 fieldcure-mcp-outbox remove <id>          # Remove a channel
@@ -385,7 +390,7 @@ fieldcure-mcp-outbox remove <id>          # Remove a channel
 | Channel metadata | `%LOCALAPPDATA%\FieldCure\Mcp.Outbox\channels.json` |
 | Secrets | Windows Credential Manager (DPAPI) |
 | Telegram sessions | `%LOCALAPPDATA%\FieldCure\Mcp.Outbox\sessions\` |
-| KakaoTalk tokens | `%LOCALAPPDATA%\FieldCure\Mcp.Outbox\tokens\` |
+| OAuth tokens (Microsoft, KakaoTalk) | `%LOCALAPPDATA%\FieldCure\Mcp.Outbox\tokens\` |
 
 ## Project Structure
 
@@ -398,6 +403,7 @@ src/FieldCure.Mcp.Outbox/
 │   ├── SlackChannel.cs         # Slack Web API
 │   ├── TelegramChannel.cs      # WTelegramClient
 │   ├── SmtpChannel.cs          # MailKit SMTP
+│   ├── MicrosoftChannel.cs     # Microsoft Graph API
 │   └── KakaoTalkChannel.cs     # Kakao REST API
 ├── Tools/
 │   ├── ListChannelsTool.cs     # list_channels
@@ -410,6 +416,7 @@ src/FieldCure.Mcp.Outbox/
 │   ├── SlackSetup.cs
 │   ├── TelegramSetup.cs
 │   ├── SmtpSetup.cs
+│   ├── MicrosoftSetup.cs
 │   └── KakaoTalkSetup.cs
 └── Configuration/
     ├── ChannelStore.cs         # channels.json persistence

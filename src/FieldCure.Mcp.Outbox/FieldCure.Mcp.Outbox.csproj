@@ -8,13 +8,13 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
 
-    <Version>0.3.0</Version>
+    <Version>0.4.0</Version>
     <PackageId>FieldCure.Mcp.Outbox</PackageId>
 
     <Authors>Jong Hyun Kim</Authors>
     <Company>Fieldcure Co., Ltd.</Company>
     <Copyright>Copyright (c) 2026 Fieldcure Co., Ltd.</Copyright>
-    <Description>MCP server for multi-channel messaging. Supports Slack, Telegram, SMTP (Gmail, Outlook, Microsoft 365, Naver), and KakaoTalk via stdio transport.</Description>
+    <Description>MCP server for multi-channel messaging. Supports Slack, Telegram, Email (Gmail, Naver, Microsoft Graph API), and KakaoTalk via stdio transport.</Description>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/fieldcure/fieldcure-mcp-outbox</PackageProjectUrl>
     <RepositoryUrl>https://github.com/fieldcure/fieldcure-mcp-outbox</RepositoryUrl>
@@ -22,7 +22,7 @@
     <PackageTags>mcp;messaging;slack;telegram;smtp;kakaotalk;outbox</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageIcon>Logo.png</PackageIcon>
-    <PackageReleaseNotes>v0.3.0: Fix Naver SMTP (port 465/SSL, ID-only auth); add detailed Naver setup guide; fix Slack bot invite instructions to reference App Name; mark Outlook and Microsoft 365 as unverified.</PackageReleaseNotes>
+    <PackageReleaseNotes>v0.4.0: Add Microsoft Graph API channel for Outlook/M365 email (OAuth 2.0); remove deprecated SMTP presets for Outlook and Microsoft 365.</PackageReleaseNotes>
 
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>fieldcure-mcp-outbox</ToolCommandName>

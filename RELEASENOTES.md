@@ -1,5 +1,11 @@
 # Release Notes
 
+## v0.4.0 (2026-03-31)
+
+- **New: Microsoft Graph API channel** — send email via `POST /me/sendMail` with OAuth 2.0; supports both personal (@outlook.com, @hotmail.com, @live.com) and work/school (Microsoft 365) accounts
+- **Remove: Outlook / Microsoft 365 SMTP presets** — deprecated by Microsoft (basic auth no longer supported); replaced by the new `microsoft` channel type
+- **Fix: Naver SMTP preset test** — correct expected port from 587 to 465
+
 ## v0.3.0 (2026-03-31)
 
 - **Fix: Naver SMTP authentication** — use Naver ID only (without `@naver.com`) as SMTP username; change port from 587/STARTTLS to 465/SSL per Naver official settings
