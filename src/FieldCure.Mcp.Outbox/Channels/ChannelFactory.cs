@@ -24,6 +24,7 @@ public static class ChannelFactory
             "telegram" => CreateTelegram(metadata, credentials),
             "smtp" => CreateSmtp(metadata, credentials),
             "kakaotalk" => CreateKakaoTalk(metadata, credentials, httpClientFactory),
+            "microsoft" => CreateMicrosoft(metadata, credentials, httpClientFactory),
             _ => throw new ArgumentException($"Unknown channel type: {metadata.Type}"),
         };
     }
@@ -115,6 +116,31 @@ public static class ChannelFactory
             metadata.Id,
             metadata.Name,
             apiKey,
+            clientSecret,
+            tokenPath,
+            httpClientFactory.CreateClient());
+    }
+
+    /// <summary>
+    /// Creates a Microsoft Graph API channel from metadata and credentials.
+    /// </summary>
+    static MicrosoftChannel CreateMicrosoft(ChannelMetadata metadata, CredentialManager credentials,
+        IHttpClientFactory httpClientFactory)
+    {
+        var clientId = credentials.Retrieve($"FieldCure.Outbox:{metadata.Id}:client_id")
+            ?? throw new InvalidOperationException($"Client ID not found for channel '{metadata.Id}'.");
+
+        var clientSecret = credentials.Retrieve($"FieldCure.Outbox:{metadata.Id}:client_secret")
+            ?? throw new InvalidOperationException($"Client secret not found for channel '{metadata.Id}'.");
+
+        var tokenPath = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "FieldCure", "Mcp.Outbox", "tokens", $"{metadata.Id}.json");
+
+        return new MicrosoftChannel(
+            metadata.Id,
+            metadata.Name,
+            clientId,
             clientSecret,
             tokenPath,
             httpClientFactory.CreateClient());

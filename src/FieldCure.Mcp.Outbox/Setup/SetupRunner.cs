@@ -9,7 +9,7 @@ public static class SetupRunner
 {
     static readonly HashSet<string> ValidTypes = new(StringComparer.OrdinalIgnoreCase)
     {
-        "slack", "telegram", "gmail", "outlook", "microsoft365", "naver", "smtp", "kakaotalk"
+        "slack", "telegram", "gmail", "naver", "smtp", "kakaotalk", "microsoft"
     };
 
     /// <summary>
@@ -57,10 +57,11 @@ public static class SetupRunner
                     await TelegramSetup.RunAsync(store, credentials, name);
                     break;
                 case "gmail":
-                case "outlook":
-                case "microsoft365":
                 case "naver":
                     await SmtpSetup.RunAsync(store, credentials, providerShortcut: type, name);
+                    break;
+                case "microsoft":
+                    await MicrosoftSetup.RunAsync(store, credentials, name);
                     break;
                 case "smtp":
                     await SmtpSetup.RunAsync(store, credentials, providerShortcut: null, name);
@@ -160,6 +161,10 @@ public static class SetupRunner
                 credentials.Delete($"FieldCure.Outbox:{channel.Id}:api_key");
                 credentials.Delete($"FieldCure.Outbox:{channel.Id}:client_secret");
                 break;
+            case "microsoft":
+                credentials.Delete($"FieldCure.Outbox:{channel.Id}:client_id");
+                credentials.Delete($"FieldCure.Outbox:{channel.Id}:client_secret");
+                break;
         }
     }
 
@@ -178,6 +183,7 @@ public static class SetupRunner
                 break;
             }
             case "kakaotalk":
+            case "microsoft":
             {
                 var tokenPath = Path.Combine(store.DataDirectory, "tokens", $"{channel.Id}.json");
                 if (File.Exists(tokenPath))

@@ -40,6 +40,38 @@ public class ChannelFactoryTests
     }
 
     [TestMethod]
+    public void Create_Microsoft_ReturnsMicrosoftChannel()
+    {
+        var credentials = new CredentialManager();
+        var testId = $"test_factory_microsoft_{Guid.NewGuid():N}";
+
+        try
+        {
+            credentials.Store($"FieldCure.Outbox:{testId}:client_id", "test-client-id");
+            credentials.Store($"FieldCure.Outbox:{testId}:client_secret", "test-client-secret");
+
+            var metadata = new ChannelMetadata
+            {
+                Id = testId,
+                Type = "microsoft",
+                Name = "test",
+                From = "test@outlook.com",
+            };
+
+            var httpFactory = new TestHttpClientFactory();
+            var channel = ChannelFactory.Create(metadata, credentials, httpFactory);
+
+            Assert.IsInstanceOfType(channel, typeof(MicrosoftChannel));
+            Assert.AreEqual(testId, channel.Id);
+        }
+        finally
+        {
+            credentials.Delete($"FieldCure.Outbox:{testId}:client_id");
+            credentials.Delete($"FieldCure.Outbox:{testId}:client_secret");
+        }
+    }
+
+    [TestMethod]
     public void Create_UnknownType_ThrowsArgumentException()
     {
         var metadata = new ChannelMetadata

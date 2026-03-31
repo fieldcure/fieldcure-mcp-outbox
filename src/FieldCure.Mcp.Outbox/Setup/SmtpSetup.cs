@@ -10,8 +10,6 @@ public static class SmtpSetup
     static readonly (string Key, string Label, string Host)[] Providers =
     [
         ("gmail", "Gmail", "smtp.gmail.com"),
-        ("outlook", "Outlook", "smtp-mail.outlook.com"),
-        ("microsoft365", "Microsoft 365", "smtp.office365.com"),
         ("naver", "Naver", "smtp.naver.com"),
     ];
 
