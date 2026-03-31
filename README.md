@@ -128,7 +128,7 @@ No secrets are exposed in conversation history or config files.
 4. Under **Bot Token Scopes**, click **Add an OAuth Scope** and add `chat:write`
 5. Scroll up and click **Install to Workspace** → **Allow**
 6. Copy the **Bot User OAuth Token** (`xoxb-...`)
-7. **Important:** In your Slack workspace, invite the bot to the channel where you want to send messages. Type `/invite @YourBotName` in the channel.
+7. **Important:** In your Slack workspace, invite the bot to the channel where you want to send messages. Type `/invite @YourAppName` in the channel (e.g., `/invite @AssistStudio` if you named your app "AssistStudio" in step 2).
 
 **Add Channel:**
 
@@ -141,7 +141,7 @@ You will be prompted for:
 - **Bot Token:** The `xoxb-...` token from step 6
 
 > **Note:** The bot must be invited to the channel before it can send messages.
-> Type `/invite @YourBotName` in the Slack channel.
+> Type `/invite @YourAppName` in the channel (use the App Name from step 2).
 
 ![Slack Setup](docs/setup-slack.png)
 

@@ -49,7 +49,7 @@ public static class SlackSetup
         ConsoleHelper.PrintSuccess($"Channel '{id}' added.");
         Console.WriteLine();
         Console.WriteLine("Note: You must invite the bot to the channel before sending messages.");
-        Console.WriteLine("      Type /invite @YourBotName in the Slack channel.");
+        Console.WriteLine("      Type /invite @YourAppName in the channel (use the App Name you set in Slack).");
         ConsoleHelper.WaitForKey();
     }
 }
