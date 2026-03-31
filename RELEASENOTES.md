@@ -1,5 +1,13 @@
 # Release Notes
 
+## v0.3.0 (2026-03-31)
+
+- **Fix: Naver SMTP authentication** — use Naver ID only (without `@naver.com`) as SMTP username; change port from 587/STARTTLS to 465/SSL per Naver official settings
+- **Fix: Naver app password hint** — show correct format `[XXXXXXXXXXXX]` (12 uppercase letters and digits) instead of Gmail-style `[xxxx xxxx xxxx xxxx]`
+- **Fix: Slack bot invite instructions** — replace generic `@YourBotName` with `@YourAppName` and reference the App Name from step 2
+- **Docs: Naver setup guide** — add detailed prerequisites, SMTP/POP3 activation, 2-Step Verification, and app password generation steps
+- **Docs: Outlook / Microsoft 365** — mark as unverified with note to open an issue if problems occur
+
 ## v0.2.0 (2026-03-30)
 
 - **Fix: stdio transport corruption** — move `Console.OutputEncoding = UTF8` to CLI mode only; was corrupting MCP JSON-RPC responses when set before server startup
