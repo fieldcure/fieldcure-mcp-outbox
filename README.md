@@ -249,14 +249,14 @@ For both personal accounts (@outlook.com, @hotmail.com, @live.com) and business/
 2. An Azure Entra ID app registration with **Mail.Send** permission
 
 **Setting up Azure Entra ID App:**
-1. Go to [entra.microsoft.com](https://entra.microsoft.com) → **Entra ID** → **앱 등록** → **새 등록**
+1. Go to [entra.microsoft.com](https://entra.microsoft.com) → **Identity** → **App registrations** → **New registration**
 2. Enter a name (e.g. `outbox`)
-3. Under **지원되는 계정 유형**, select **모든 Entra ID 테넌트 + 개인 Microsoft 계정** (to support both personal and work accounts)
-4. Under **리디렉션 URI**, select **웹** and enter `http://localhost:9876/callback`
-5. Click **등록**
-6. Note the **애플리케이션(클라이언트) ID** on the overview page
-7. Go to **API 사용 권한** → **권한 추가** → **Microsoft Graph** → **위임된 권한** → search `Mail.Send` → check it → **권한 추가**
-8. Go to **인증서 및 암호** → **새 클라이언트 비밀** → enter a description → **추가** → copy the **값(Value)** (shown only once)
+3. Under **Supported account types**, select **Accounts in any organizational directory and personal Microsoft accounts** (to support both personal and work accounts)
+4. Under **Redirect URI**, select **Web** and enter `http://localhost:9876/callback`
+5. Click **Register**
+6. Note the **Application (client) ID** on the overview page
+7. Go to **API permissions** → **Add a permission** → **Microsoft Graph** → **Delegated permissions** → search `Mail.Send` → check it → **Add permissions**
+8. Go to **Certificates & secrets** → **New client secret** → enter a description → **Add** → copy the **Value** (shown only once)
 
 **Add Channel:**
 
