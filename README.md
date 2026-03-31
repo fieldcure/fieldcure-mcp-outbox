@@ -269,6 +269,8 @@ You will be prompted for:
 - **Client Secret:** The client secret value from step 8
 - A browser window will open for Microsoft sign-in and consent
 
+![Microsoft Setup](docs/setup-microsoft.png)
+
 #### Naver
 
 **Prerequisites:**
