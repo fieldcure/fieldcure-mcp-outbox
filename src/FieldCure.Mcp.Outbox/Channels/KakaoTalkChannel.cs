@@ -110,9 +110,14 @@ public class KakaoTalkChannel : IChannel
         if (string.IsNullOrEmpty(tokenData.RefreshToken))
             return null;
 
+        Console.Error.WriteLine($"[KakaoTalk] Access token expired (was {tokenData.ExpiresAt:u}), attempting refresh...");
         var refreshed = await RefreshTokenAsync(tokenData.RefreshToken, cancellationToken);
         if (refreshed == null)
+        {
+            Console.Error.WriteLine("[KakaoTalk] Token refresh returned null — reauthorization may be required");
             return null;
+        }
+        Console.Error.WriteLine($"[KakaoTalk] Token refreshed, new expiry in {refreshed.ExpiresIn}s");
 
         // Update token file
         tokenData.AccessToken = refreshed.AccessToken;
@@ -151,10 +156,14 @@ public class KakaoTalkChannel : IChannel
         };
 
         var response = await _httpClient.SendAsync(httpRequest, cancellationToken);
-        if (!response.IsSuccessStatusCode)
-            return null;
-
         var json = await response.Content.ReadAsStringAsync(cancellationToken);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            Console.Error.WriteLine($"[KakaoTalk] Token refresh failed ({response.StatusCode}): {json}");
+            return null;
+        }
+
         return JsonSerializer.Deserialize<KakaoTokenResponse>(json);
     }
 
