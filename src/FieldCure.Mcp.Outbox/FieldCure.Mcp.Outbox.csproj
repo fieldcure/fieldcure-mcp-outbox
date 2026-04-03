@@ -8,7 +8,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
 
-    <Version>0.4.0</Version>
+    <Version>0.4.1</Version>
     <PackageId>FieldCure.Mcp.Outbox</PackageId>
 
     <Authors>Jong Hyun Kim</Authors>
@@ -22,14 +22,14 @@
     <PackageTags>mcp;messaging;slack;telegram;smtp;kakaotalk;outbox</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageIcon>Logo.png</PackageIcon>
-    <PackageReleaseNotes>v0.4.0: Add Microsoft Graph API channel for Outlook/M365 email (OAuth 2.0); remove deprecated SMTP presets for Outlook and Microsoft 365.</PackageReleaseNotes>
+    <PackageReleaseNotes>v0.4.1: Upgrade ModelContextProtocol SDK to 1.2.0.</PackageReleaseNotes>
 
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>fieldcure-mcp-outbox</ToolCommandName>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="ModelContextProtocol" Version="1.1.0" />
+    <PackageReference Include="ModelContextProtocol" Version="1.2.0" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.*" />
     <PackageReference Include="Microsoft.Extensions.Http" Version="8.*" />
     <PackageReference Include="WTelegramClient" Version="4.*" />

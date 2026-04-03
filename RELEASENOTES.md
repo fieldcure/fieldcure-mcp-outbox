@@ -1,5 +1,9 @@
 # Release Notes
 
+## v0.4.1 (2026-04-03)
+
+- `ModelContextProtocol` 1.1.0 → 1.2.0
+
 ## v0.4.0 (2026-03-31)
 
 - **New: Microsoft Graph API channel** — send email via `POST /me/sendMail` with OAuth 2.0; supports both personal (@outlook.com, @hotmail.com, @live.com) and work/school (Microsoft 365) accounts
