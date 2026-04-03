@@ -25,6 +25,7 @@ public static class ChannelFactory
             "smtp" => CreateSmtp(metadata, credentials),
             "kakaotalk" => CreateKakaoTalk(metadata, credentials, httpClientFactory),
             "microsoft" => CreateMicrosoft(metadata, credentials, httpClientFactory),
+            "discord" => CreateDiscord(metadata, credentials, httpClientFactory),
             _ => throw new ArgumentException($"Unknown channel type: {metadata.Type}"),
         };
     }
@@ -143,6 +144,22 @@ public static class ChannelFactory
             clientId,
             clientSecret,
             tokenPath,
+            httpClientFactory.CreateClient());
+    }
+
+    /// <summary>
+    /// Creates a Discord channel from metadata and credentials.
+    /// </summary>
+    static DiscordChannel CreateDiscord(ChannelMetadata metadata, CredentialManager credentials,
+        IHttpClientFactory httpClientFactory)
+    {
+        var webhookUrl = credentials.Retrieve($"FieldCure.Outbox:{metadata.Id}")
+            ?? throw new InvalidOperationException($"Webhook URL not found for channel '{metadata.Id}'.");
+
+        return new DiscordChannel(
+            metadata.Id,
+            metadata.Name,
+            webhookUrl,
             httpClientFactory.CreateClient());
     }
 }

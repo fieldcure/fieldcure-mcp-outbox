@@ -9,7 +9,7 @@ public static class SetupRunner
 {
     static readonly HashSet<string> ValidTypes = new(StringComparer.OrdinalIgnoreCase)
     {
-        "slack", "telegram", "gmail", "naver", "smtp", "kakaotalk", "microsoft"
+        "slack", "telegram", "gmail", "naver", "smtp", "kakaotalk", "microsoft", "discord"
     };
 
     /// <summary>
@@ -68,6 +68,9 @@ public static class SetupRunner
                     break;
                 case "kakaotalk":
                     await KakaoTalkSetup.RunAsync(store, credentials, name);
+                    break;
+                case "discord":
+                    await DiscordSetup.RunAsync(store, credentials, name);
                     break;
             }
 
@@ -164,6 +167,9 @@ public static class SetupRunner
             case "microsoft":
                 credentials.Delete($"FieldCure.Outbox:{channel.Id}:client_id");
                 credentials.Delete($"FieldCure.Outbox:{channel.Id}:client_secret");
+                break;
+            case "discord":
+                credentials.Delete($"FieldCure.Outbox:{channel.Id}");
                 break;
         }
     }

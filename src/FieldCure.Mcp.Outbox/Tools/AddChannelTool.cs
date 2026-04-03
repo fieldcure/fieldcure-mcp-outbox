@@ -21,10 +21,10 @@ public static class AddChannelTool
     [McpServerTool(Name = "add_channel")]
     [Description(
         "Adds a new messaging channel by opening a setup console window for secure credential entry. " +
-        "Supported types: slack, telegram, gmail, outlook, microsoft365, naver, smtp, kakaotalk.")]
+        "Supported types: slack, telegram, gmail, outlook, microsoft365, naver, smtp, kakaotalk, discord.")]
     public static async Task<string> AddChannel(
         ChannelStore store,
-        [Description("Channel type: slack, telegram, gmail, outlook, microsoft365, naver, smtp, kakaotalk")]
+        [Description("Channel type: slack, telegram, gmail, outlook, microsoft365, naver, smtp, kakaotalk, discord")]
         string type,
         [Description("Display name for the channel (optional)")]
         string? name = null,
