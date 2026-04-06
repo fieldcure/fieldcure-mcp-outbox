@@ -19,11 +19,12 @@
     <PackageProjectUrl>https://github.com/fieldcure/fieldcure-mcp-outbox</PackageProjectUrl>
     <RepositoryUrl>https://github.com/fieldcure/fieldcure-mcp-outbox</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
-    <PackageTags>mcp;messaging;slack;telegram;smtp;kakaotalk;outbox</PackageTags>
+    <PackageTags>mcp;mcp-server;ai;dotnet;email;smtp;slack;telegram;kakaotalk;notification</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageIcon>Logo.png</PackageIcon>
     <PackageReleaseNotes>v0.4.1: Upgrade ModelContextProtocol SDK to 1.2.0.</PackageReleaseNotes>
 
+    <PackageType>McpServer</PackageType>
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>fieldcure-mcp-outbox</ToolCommandName>
   </PropertyGroup>
@@ -39,6 +40,7 @@
   <ItemGroup>
     <None Include="README.md" Pack="true" PackagePath="" />
     <None Include="Logo.png" Pack="true" PackagePath="" />
+    <None Include=".mcp/server.json" Pack="true" PackagePath=".mcp/" />
   </ItemGroup>
 
 </Project>

@@ -1,0 +1,23 @@
+{
+  "$schema": "https://modelcontextprotocol.io/schemas/draft/2025-07-09/server.json",
+  "name": "io.github.fieldcure/outbox",
+  "description": "Multi-channel messaging MCP server — Slack, Telegram, Email (SMTP/Graph), KakaoTalk.",
+  "packages": [
+    {
+      "registry_name": "nuget",
+      "name": "FieldCure.Mcp.Outbox",
+      "version": "0.4.1",
+      "runtime": "dotnet",
+      "source": "DotnetTool",
+      "command": "fieldcure-mcp-outbox",
+      "environment_variables": []
+    }
+  ],
+  "repository": {
+    "url": "https://github.com/fieldcure/fieldcure-mcp-outbox",
+    "source": "github"
+  },
+  "version_detail": {
+    "version": "0.4.1"
+  }
+}
