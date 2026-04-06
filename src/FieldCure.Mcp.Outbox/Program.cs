@@ -40,6 +40,8 @@ builder.Services
         options.ServerInfo = new()
         {
             Name = "fieldcure-mcp-outbox",
+            Title = "FieldCure Outbox",
+            Description = "Multi-channel messaging — Slack, Telegram, Email (SMTP/Graph), KakaoTalk",
             Version = typeof(Program).Assembly
                 .GetCustomAttribute<System.Reflection.AssemblyInformationalVersionAttribute>()
                 ?.InformationalVersion ?? "0.0.0",
