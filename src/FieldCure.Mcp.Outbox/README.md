@@ -76,18 +76,6 @@ Add to `.vscode/mcp.json`:
 - Channel setup runs in a **separate console process** — credentials never pass through MCP stdio
 - `send_message` and `remove_channel` require **user confirmation** in the client
 
-### AssistStudio
-
-Settings > MCP Servers > **Add Server**:
-
-| Field | Value |
-|-------|-------|
-| **Name** | `Outbox` |
-| **Command** | `fieldcure-mcp-outbox` |
-| **Arguments** | *(empty)* |
-| **Environment** | *(none — channel credentials stored in Windows Credential Manager)* |
-| **Description** | *(auto-filled on first connection)* |
-
 ## Requirements
 
 - [.NET 8.0 Runtime](https://dotnet.microsoft.com/download/dotnet/8.0) or later

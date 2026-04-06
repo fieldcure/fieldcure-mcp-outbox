@@ -97,18 +97,6 @@ Add to `.vscode/mcp.json`:
 }
 ```
 
-### AssistStudio
-
-Settings > MCP Servers > **Add Server**:
-
-| Field | Value |
-|-------|-------|
-| **Name** | `Outbox` |
-| **Command** | `fieldcure-mcp-outbox` |
-| **Arguments** | *(empty)* |
-| **Environment** | *(none — channel credentials stored in Windows Credential Manager)* |
-| **Description** | *(auto-filled on first connection)* |
-
 ## Tools
 
 | Tool | Description | Confirmation |
