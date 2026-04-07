@@ -119,7 +119,7 @@ No secrets are exposed in conversation history or config files.
 | Naver | SMTP | [Guide](docs/setup-naver.md) |
 | Microsoft | Graph API (`/me/sendMail`) | [Guide](docs/setup-microsoft.md) |
 | KakaoTalk | Kakao REST API | [Guide](docs/setup-kakaotalk.md) |
-| Discord | Webhook API | Webhook URL |
+| Discord | Webhook API | [Guide](docs/setup-discord.md) |
 | Custom SMTP | User-defined | [Guide](docs/setup-custom-smtp.md) |
 
 ## CLI Commands

@@ -1,5 +1,15 @@
 # Release Notes
 
+## v1.0.0 (2026-04-07)
+
+- **New: Discord webhook channel** — send messages to Discord channels via webhook URL; supports message splitting with embeds for long messages, rate limit handling with automatic retry
+- **New: `discordapp.com` webhook URL support** — accept both `discord.com` and `discordapp.com` webhook URL prefixes
+- **Improvement: Channel list sorted alphabetically** — `list_channels` tool and CLI `list` command now return channels sorted by ID
+- **Fix: Stale channel type list** — remove non-existent `outlook` / `microsoft365` from tool descriptions; add `discord` and `microsoft`
+- **Fix: HttpResponseMessage leak** — properly dispose HTTP responses in Discord channel on rate limit retry
+- **Cleanup: Remove unused `TcpPortFinder`** — dead code removed from KakaoTalk setup
+- **Docs: Fix `SmtpPresets` doc comment** — remove incorrect claim that all presets use port 587
+
 ## v0.4.1 (2026-04-03)
 
 - `ModelContextProtocol` 1.1.0 → 1.2.0
