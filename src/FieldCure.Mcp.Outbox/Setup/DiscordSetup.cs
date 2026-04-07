@@ -7,7 +7,11 @@ namespace FieldCure.Mcp.Outbox.Setup;
 /// </summary>
 public static class DiscordSetup
 {
-    const string WebhookUrlPrefix = "https://discord.com/api/webhooks/";
+    static readonly string[] WebhookUrlPrefixes =
+    [
+        "https://discord.com/api/webhooks/",
+        "https://discordapp.com/api/webhooks/",
+    ];
 
     /// <summary>
     /// Prompts for a Webhook URL and registers a new Discord channel.
@@ -35,9 +39,9 @@ public static class DiscordSetup
             return;
         }
 
-        if (!webhookUrl.StartsWith(WebhookUrlPrefix, StringComparison.OrdinalIgnoreCase))
+        if (!WebhookUrlPrefixes.Any(p => webhookUrl.StartsWith(p, StringComparison.OrdinalIgnoreCase)))
         {
-            ConsoleHelper.PrintError($"Webhook URL must start with {WebhookUrlPrefix}");
+            ConsoleHelper.PrintError("Webhook URL must start with https://discord.com/api/webhooks/ or https://discordapp.com/api/webhooks/");
             ConsoleHelper.WaitForKey();
             return;
         }
@@ -55,8 +59,6 @@ public static class DiscordSetup
 
         Console.WriteLine();
         ConsoleHelper.PrintSuccess($"Channel '{id}' added.");
-        Console.WriteLine();
-        Console.WriteLine("Tip: To get a Webhook URL, go to your Discord channel settings > Integrations > Webhooks.");
         ConsoleHelper.WaitForKey();
     }
 }
