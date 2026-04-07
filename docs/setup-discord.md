@@ -32,3 +32,5 @@ You will be prompted for:
 - Longer messages are automatically split into embeds (up to 40,960 characters)
 - Messages appear with the username "AssistStudio" in Discord
 - Rate limiting is handled automatically with one retry
+
+![Discord Setup](setup-discord.png)
