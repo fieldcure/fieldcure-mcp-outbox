@@ -101,7 +101,7 @@ public static class SetupRunner
         Console.WriteLine($"{"ID",-30} {"Type",-12} {"Name",-20} {"Created"}");
         Console.WriteLine(new string('-', 80));
 
-        foreach (var ch in channels)
+        foreach (var ch in channels.OrderBy(c => c.Id))
         {
             Console.WriteLine($"{ch.Id,-30} {ch.Type,-12} {ch.Name,-20} {ch.CreatedAt:yyyy-MM-dd HH:mm}");
         }

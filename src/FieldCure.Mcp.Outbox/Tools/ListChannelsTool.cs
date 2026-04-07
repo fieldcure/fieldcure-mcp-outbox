@@ -27,7 +27,7 @@ public static class ListChannelsTool
 
         var result = new
         {
-            channels = channels.Select(c => new
+            channels = channels.OrderBy(c => c.Id).Select(c => new
             {
                 id = c.Id,
                 type = c.Type,
