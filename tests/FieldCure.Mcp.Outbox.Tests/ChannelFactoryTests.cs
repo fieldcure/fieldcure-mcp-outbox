@@ -72,6 +72,35 @@ public class ChannelFactoryTests
     }
 
     [TestMethod]
+    public void Create_Discord_ReturnsDiscordChannel()
+    {
+        var credentials = new CredentialManager();
+        var testId = $"test_factory_discord_{Guid.NewGuid():N}";
+
+        try
+        {
+            credentials.Store($"FieldCure.Outbox:{testId}", "https://discord.com/api/webhooks/123/abc");
+
+            var metadata = new ChannelMetadata
+            {
+                Id = testId,
+                Type = "discord",
+                Name = "test",
+            };
+
+            var httpFactory = new TestHttpClientFactory();
+            var channel = ChannelFactory.Create(metadata, credentials, httpFactory);
+
+            Assert.IsInstanceOfType(channel, typeof(DiscordChannel));
+            Assert.AreEqual(testId, channel.Id);
+        }
+        finally
+        {
+            credentials.Delete($"FieldCure.Outbox:{testId}");
+        }
+    }
+
+    [TestMethod]
     public void Create_UnknownType_ThrowsArgumentException()
     {
         var metadata = new ChannelMetadata

@@ -12,6 +12,7 @@ public class DiscordChannel : IChannel
     const int ContentMaxLength = 2000;
     const int EmbedDescriptionMaxLength = 4096;
     const int MaxEmbeds = 10;
+    const string Username = "AssistStudio";
 
     readonly string _webhookUrl;
     readonly HttpClient _httpClient;
@@ -46,12 +47,12 @@ public class DiscordChannel : IChannel
         // Short message: send as plain content
         if (message.Length <= ContentMaxLength)
         {
-            return await PostAsync(new { content = message, username = "AssistStudio" }, cancellationToken);
+            return await PostAsync(new { content = message, username = Username }, cancellationToken);
         }
 
         // Long message: use embeds
         var embeds = BuildEmbeds(message);
-        return await PostAsync(new { embeds, username = "AssistStudio" }, cancellationToken);
+        return await PostAsync(new { embeds, username = Username }, cancellationToken);
     }
 
     async Task<SendResult> PostAsync(object payload, CancellationToken cancellationToken)
@@ -71,6 +72,9 @@ public class DiscordChannel : IChannel
         {
             var retryAfter = response.Headers.RetryAfter?.Delta
                 ?? TimeSpan.FromSeconds(1);
+            response.Dispose();
+
+            Console.Error.WriteLine($"[Discord] Rate limited, retrying after {retryAfter.TotalSeconds:F1}s...");
             await Task.Delay(retryAfter, cancellationToken);
 
             // Retry once
@@ -79,13 +83,16 @@ public class DiscordChannel : IChannel
             response = await _httpClient.SendAsync(retryRequest, cancellationToken);
         }
 
-        if (response.IsSuccessStatusCode)
+        using (response)
         {
-            return new SendResult { Success = true };
-        }
+            if (response.IsSuccessStatusCode)
+            {
+                return new SendResult { Success = true };
+            }
 
-        var errorBody = await response.Content.ReadAsStringAsync(cancellationToken);
-        return new SendResult { Success = false, Error = $"Discord API error {(int)response.StatusCode}: {errorBody}" };
+            var errorBody = await response.Content.ReadAsStringAsync(cancellationToken);
+            return new SendResult { Success = false, Error = $"Discord API error {(int)response.StatusCode}: {errorBody}" };
+        }
     }
 
     static List<object> BuildEmbeds(string message)
@@ -98,6 +105,12 @@ public class DiscordChannel : IChannel
             var chunkLength = Math.Min(remaining.Length, EmbedDescriptionMaxLength);
             var chunk = remaining[..chunkLength].ToString();
             remaining = remaining[chunkLength..];
+
+            // Append truncation notice on the last embed if content remains
+            if (embeds.Count == MaxEmbeds - 1 && remaining.Length > 0)
+            {
+                chunk = chunk[..^13] + "\n[truncated]";
+            }
 
             embeds.Add(new { description = chunk, color = 5814783 });
         }

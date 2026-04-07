@@ -41,7 +41,7 @@ builder.Services
         {
             Name = "fieldcure-mcp-outbox",
             Title = "FieldCure Outbox",
-            Description = "Multi-channel messaging — Slack, Telegram, Email (SMTP/Graph), KakaoTalk",
+            Description = "Multi-channel messaging — Slack, Telegram, Email (SMTP/Graph), KakaoTalk, Discord",
             Version = typeof(Program).Assembly
                 .GetCustomAttribute<System.Reflection.AssemblyInformationalVersionAttribute>()
                 ?.InformationalVersion ?? "0.0.0",
@@ -62,6 +62,6 @@ static int PrintUsage()
     Console.Error.WriteLine("  fieldcure-mcp-outbox list               List configured channels");
     Console.Error.WriteLine("  fieldcure-mcp-outbox remove <id>        Remove a channel");
     Console.Error.WriteLine();
-    Console.Error.WriteLine("Channel types: slack, telegram, gmail, outlook, microsoft365, naver, smtp, kakaotalk");
+    Console.Error.WriteLine("Channel types: slack, telegram, gmail, naver, smtp, kakaotalk, microsoft, discord");
     return 1;
 }
