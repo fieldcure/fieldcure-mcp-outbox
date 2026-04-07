@@ -3,11 +3,11 @@
 [![NuGet](https://img.shields.io/nuget/v/FieldCure.Mcp.Outbox)](https://www.nuget.org/packages/FieldCure.Mcp.Outbox)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/fieldcure/fieldcure-mcp-outbox/blob/main/LICENSE)
 
-A multi-channel messaging [Model Context Protocol (MCP)](https://modelcontextprotocol.io) server that sends messages through Slack, Telegram, Email (Gmail, Naver, Microsoft Graph API), and KakaoTalk. Built with C# and the official [MCP C# SDK](https://github.com/modelcontextprotocol/csharp-sdk).
+A multi-channel messaging [Model Context Protocol (MCP)](https://modelcontextprotocol.io) server that sends messages through Slack, Telegram, Email (Gmail, Naver, Microsoft Graph API), KakaoTalk, and Discord. Built with C# and the official [MCP C# SDK](https://github.com/modelcontextprotocol/csharp-sdk).
 
 ## Features
 
-- **Multiple messaging channels** — Slack, Telegram, Email (Gmail, Naver, Microsoft Graph API), KakaoTalk
+- **Multiple messaging channels** — Slack, Telegram, Email (Gmail, Naver, Microsoft Graph API), KakaoTalk, Discord
 - **4 MCP tools** — `list_channels`, `add_channel`, `send_message`, `remove_channel`
 - **Secure credential storage** — secrets stored in Windows Credential Manager (DPAPI), never exposed to LLM
 - **CLI channel setup** — interactive console for credential entry, launched as a subprocess
@@ -119,6 +119,7 @@ No secrets are exposed in conversation history or config files.
 | Naver | SMTP | [Guide](docs/setup-naver.md) |
 | Microsoft | Graph API (`/me/sendMail`) | [Guide](docs/setup-microsoft.md) |
 | KakaoTalk | Kakao REST API | [Guide](docs/setup-kakaotalk.md) |
+| Discord | Webhook API | Webhook URL |
 | Custom SMTP | User-defined | [Guide](docs/setup-custom-smtp.md) |
 
 ## CLI Commands
@@ -132,6 +133,7 @@ fieldcure-mcp-outbox add naver            # Add Naver SMTP channel
 fieldcure-mcp-outbox add smtp             # Add custom SMTP channel
 fieldcure-mcp-outbox add microsoft        # Add Microsoft (Outlook/M365) channel
 fieldcure-mcp-outbox add kakaotalk        # Add KakaoTalk channel
+fieldcure-mcp-outbox add discord          # Add Discord channel
 fieldcure-mcp-outbox list                 # List configured channels
 fieldcure-mcp-outbox remove <id>          # Remove a channel
 ```
@@ -157,7 +159,8 @@ src/FieldCure.Mcp.Outbox/
 │   ├── TelegramChannel.cs      # WTelegramClient
 │   ├── SmtpChannel.cs          # MailKit SMTP
 │   ├── MicrosoftChannel.cs     # Microsoft Graph API
-│   └── KakaoTalkChannel.cs     # Kakao REST API
+│   ├── KakaoTalkChannel.cs     # Kakao REST API
+│   └── DiscordChannel.cs       # Discord Webhook API
 ├── Tools/
 │   ├── ListChannelsTool.cs     # list_channels
 │   ├── AddChannelTool.cs       # add_channel
@@ -170,7 +173,8 @@ src/FieldCure.Mcp.Outbox/
 │   ├── TelegramSetup.cs
 │   ├── SmtpSetup.cs
 │   ├── MicrosoftSetup.cs
-│   └── KakaoTalkSetup.cs
+│   ├── KakaoTalkSetup.cs
+│   └── DiscordSetup.cs
 └── Configuration/
     ├── ChannelStore.cs         # channels.json persistence
     ├── CredentialManager.cs    # Windows Credential Manager wrapper

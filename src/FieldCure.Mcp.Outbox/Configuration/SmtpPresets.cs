@@ -21,7 +21,6 @@ public static class SmtpPresets
 
     /// <summary>
     /// Gets a preset by provider name. Returns null if not found.
-    /// All presets use port 587 with STARTTLS.
     /// </summary>
     public static SmtpPreset? Get(string provider)
     {

@@ -14,12 +14,12 @@
     <Authors>Jong Hyun Kim</Authors>
     <Company>Fieldcure Co., Ltd.</Company>
     <Copyright>Copyright (c) 2026 Fieldcure Co., Ltd.</Copyright>
-    <Description>MCP server for multi-channel messaging. Supports Slack, Telegram, Email (Gmail, Naver, Microsoft Graph API), and KakaoTalk via stdio transport.</Description>
+    <Description>MCP server for multi-channel messaging. Supports Slack, Telegram, Email (Gmail, Naver, Microsoft Graph API), KakaoTalk, and Discord via stdio transport.</Description>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/fieldcure/fieldcure-mcp-outbox</PackageProjectUrl>
     <RepositoryUrl>https://github.com/fieldcure/fieldcure-mcp-outbox</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
-    <PackageTags>mcp;mcp-server;ai;dotnet;email;smtp;slack;telegram;kakaotalk;notification</PackageTags>
+    <PackageTags>mcp;mcp-server;ai;dotnet;email;smtp;slack;telegram;kakaotalk;discord;notification</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageIcon>Logo.png</PackageIcon>
     <PackageReleaseNotes>v0.4.1: Upgrade ModelContextProtocol SDK to 1.2.0.</PackageReleaseNotes>

@@ -55,6 +55,9 @@ public class DiscordChannel : IChannel
         return await PostAsync(new { embeds, username = Username }, cancellationToken);
     }
 
+    /// <summary>
+    /// Posts a JSON payload to the Discord webhook URL, retrying once on rate limit (429).
+    /// </summary>
     async Task<SendResult> PostAsync(object payload, CancellationToken cancellationToken)
     {
         // Append ?wait=true for delivery confirmation
@@ -95,6 +98,10 @@ public class DiscordChannel : IChannel
         }
     }
 
+    /// <summary>
+    /// Splits a long message into Discord embed objects, each up to 4 096 characters.
+    /// Appends a truncation notice if the message exceeds the maximum embed capacity.
+    /// </summary>
     static List<object> BuildEmbeds(string message)
     {
         var embeds = new List<object>();

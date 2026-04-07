@@ -147,21 +147,3 @@ public static class KakaoTalkSetup
         ConsoleHelper.WaitForKey();
     }
 }
-
-/// <summary>
-/// Utility for finding an available TCP port on localhost.
-/// </summary>
-internal static class TcpPortFinder
-{
-    /// <summary>
-    /// Finds and returns an available TCP port on the loopback interface.
-    /// </summary>
-    public static int FindAvailablePort()
-    {
-        var listener = new System.Net.Sockets.TcpListener(IPAddress.Loopback, 0);
-        listener.Start();
-        var port = ((IPEndPoint)listener.LocalEndpoint).Port;
-        listener.Stop();
-        return port;
-    }
-}
