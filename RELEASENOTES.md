@@ -1,5 +1,13 @@
 # Release Notes
 
+## v1.1.0 (2026-04-14)
+
+### Changed
+
+- **Centralize `JsonSerializerOptions`** — extract shared `McpJson.Options` to eliminate per-tool serializer configuration duplication
+
+---
+
 ## v1.0.0 (2026-04-07)
 
 - **New: Discord webhook channel** — send messages to Discord channels via webhook URL; supports message splitting with embeds for long messages, rate limit handling with automatic retry
