@@ -12,12 +12,6 @@ namespace FieldCure.Mcp.Outbox.Tools;
 [McpServerToolType]
 public static class AddChannelTool
 {
-    static readonly JsonSerializerOptions JsonOptions = new()
-    {
-        WriteIndented = true,
-        PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower,
-    };
-
     [McpServerTool(Name = "add_channel")]
     [Description(
         "Adds a new messaging channel by opening a setup console window for secure credential entry. " +
@@ -37,7 +31,7 @@ public static class AddChannelTool
         // Get the executable path
         var exePath = Environment.ProcessPath;
         if (string.IsNullOrEmpty(exePath))
-            return JsonSerializer.Serialize(new { status = "error", error = "Cannot determine executable path." }, JsonOptions);
+            return JsonSerializer.Serialize(new { status = "error", error = "Cannot determine executable path." }, McpJson.Tool);
 
         // Build arguments
         var args = $"add {type}";
@@ -55,20 +49,20 @@ public static class AddChannelTool
 
         var process = Process.Start(processInfo);
         if (process == null)
-            return JsonSerializer.Serialize(new { status = "error", error = "Failed to start setup process." }, JsonOptions);
+            return JsonSerializer.Serialize(new { status = "error", error = "Failed to start setup process." }, McpJson.Tool);
 
         await process.WaitForExitAsync(cancellationToken);
 
         if (process.ExitCode != 0)
-            return JsonSerializer.Serialize(new { status = "error", error = "Setup process exited with an error." }, JsonOptions);
+            return JsonSerializer.Serialize(new { status = "error", error = "Setup process exited with an error." }, McpJson.Tool);
 
         // Find the newly added channel
         var after = await store.LoadAsync();
         var newChannel = after.FirstOrDefault(c => !beforeIds.Contains(c.Id));
 
         if (newChannel == null)
-            return JsonSerializer.Serialize(new { status = "error", error = "No new channel was added." }, JsonOptions);
+            return JsonSerializer.Serialize(new { status = "error", error = "No new channel was added." }, McpJson.Tool);
 
-        return JsonSerializer.Serialize(new { status = "ok", channel_id = newChannel.Id }, JsonOptions);
+        return JsonSerializer.Serialize(new { status = "ok", channel_id = newChannel.Id }, McpJson.Tool);
     }
 }

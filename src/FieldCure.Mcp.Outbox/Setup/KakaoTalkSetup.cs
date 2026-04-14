@@ -11,8 +11,6 @@ namespace FieldCure.Mcp.Outbox.Setup;
 /// </summary>
 public static class KakaoTalkSetup
 {
-    static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = true };
-
     /// <summary>
     /// Performs OAuth authorization and registers a new KakaoTalk channel.
     /// </summary>
@@ -126,7 +124,7 @@ public static class KakaoTalkSetup
                 : null,
         };
 
-        var tokenDataJson = JsonSerializer.Serialize(tokenData, JsonOptions);
+        var tokenDataJson = JsonSerializer.Serialize(tokenData, McpJson.Indented);
         await File.WriteAllTextAsync(tokenFilePath, tokenDataJson);
 
         Console.WriteLine("Token received and saved.");

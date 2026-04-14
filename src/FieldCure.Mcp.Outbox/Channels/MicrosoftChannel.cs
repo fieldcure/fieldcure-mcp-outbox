@@ -10,8 +10,6 @@ namespace FieldCure.Mcp.Outbox.Channels;
 /// </summary>
 public class MicrosoftChannel : IChannel
 {
-    static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = true };
-
     readonly string _clientId;
     readonly string _clientSecret;
     readonly string _tokenFilePath;
@@ -167,7 +165,7 @@ public class MicrosoftChannel : IChannel
         if (dir != null)
             Directory.CreateDirectory(dir);
 
-        var json = JsonSerializer.Serialize(tokenData, JsonOptions);
+        var json = JsonSerializer.Serialize(tokenData, McpJson.Indented);
         var tempPath = _tokenFilePath + ".tmp";
         await File.WriteAllTextAsync(tempPath, json, cancellationToken);
         File.Move(tempPath, _tokenFilePath, overwrite: true);

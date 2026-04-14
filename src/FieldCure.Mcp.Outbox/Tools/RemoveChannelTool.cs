@@ -12,12 +12,6 @@ namespace FieldCure.Mcp.Outbox.Tools;
 [McpServerToolType]
 public static class RemoveChannelTool
 {
-    static readonly JsonSerializerOptions JsonOptions = new()
-    {
-        WriteIndented = true,
-        PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower,
-    };
-
     [McpServerTool(Name = "remove_channel", Destructive = true)]
     [Description("Removes a configured messaging channel and its stored credentials.")]
     public static async Task<string> RemoveChannel(
@@ -29,7 +23,7 @@ public static class RemoveChannelTool
     {
         var metadata = await store.GetByIdAsync(channel);
         if (metadata == null)
-            return JsonSerializer.Serialize(new { status = "error", error = $"Channel not found: {channel}" }, JsonOptions);
+            return JsonSerializer.Serialize(new { status = "error", error = $"Channel not found: {channel}" }, McpJson.Tool);
 
         // Delete credentials and files
         SetupRunner.DeleteChannelCredentials(credentials, metadata);
@@ -37,6 +31,6 @@ public static class RemoveChannelTool
 
         await store.RemoveAsync(channel);
 
-        return JsonSerializer.Serialize(new { status = "ok", removed = channel }, JsonOptions);
+        return JsonSerializer.Serialize(new { status = "ok", removed = channel }, McpJson.Tool);
     }
 }

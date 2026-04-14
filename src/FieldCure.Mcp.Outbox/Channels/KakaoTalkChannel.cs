@@ -9,8 +9,6 @@ namespace FieldCure.Mcp.Outbox.Channels;
 /// </summary>
 public class KakaoTalkChannel : IChannel
 {
-    static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = true };
-
     readonly string _apiKey;
     readonly string? _clientSecret;
     readonly string _tokenFilePath;
@@ -176,7 +174,7 @@ public class KakaoTalkChannel : IChannel
         if (dir != null)
             Directory.CreateDirectory(dir);
 
-        var json = JsonSerializer.Serialize(tokenData, JsonOptions);
+        var json = JsonSerializer.Serialize(tokenData, McpJson.Indented);
         var tempPath = _tokenFilePath + ".tmp";
         await File.WriteAllTextAsync(tempPath, json, cancellationToken);
         File.Move(tempPath, _tokenFilePath, overwrite: true);

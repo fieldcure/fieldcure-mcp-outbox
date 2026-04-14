@@ -11,12 +11,6 @@ namespace FieldCure.Mcp.Outbox.Tools;
 [McpServerToolType]
 public static class ListChannelsTool
 {
-    static readonly JsonSerializerOptions JsonOptions = new()
-    {
-        WriteIndented = true,
-        PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower,
-    };
-
     [McpServerTool(Name = "list_channels")]
     [Description("Lists all configured messaging channels. Returns channel ID, type, name, and additional metadata such as the sender address for SMTP channels.")]
     public static async Task<string> ListChannels(
@@ -36,6 +30,6 @@ public static class ListChannelsTool
             }),
         };
 
-        return JsonSerializer.Serialize(result, JsonOptions);
+        return JsonSerializer.Serialize(result, McpJson.Tool);
     }
 }

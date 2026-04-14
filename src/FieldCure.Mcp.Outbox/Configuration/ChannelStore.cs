@@ -1,5 +1,4 @@
 using System.Text.Json;
-using System.Text.Json.Serialization;
 
 namespace FieldCure.Mcp.Outbox.Configuration;
 
@@ -8,12 +7,6 @@ namespace FieldCure.Mcp.Outbox.Configuration;
 /// </summary>
 public class ChannelStore
 {
-    static readonly JsonSerializerOptions JsonOptions = new()
-    {
-        WriteIndented = true,
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-    };
 
     public string DataDirectory { get; }
 
@@ -35,7 +28,7 @@ public class ChannelStore
             return [];
 
         var json = await File.ReadAllTextAsync(ChannelsFilePath);
-        var data = JsonSerializer.Deserialize<ChannelsFile>(json, JsonOptions);
+        var data = JsonSerializer.Deserialize<ChannelsFile>(json, McpJson.Store);
         return data?.Channels ?? [];
     }
 
@@ -48,7 +41,7 @@ public class ChannelStore
         Directory.CreateDirectory(DataDirectory);
 
         var data = new ChannelsFile { Channels = channels };
-        var json = JsonSerializer.Serialize(data, JsonOptions);
+        var json = JsonSerializer.Serialize(data, McpJson.Store);
 
         // Atomic write: temp file + rename
         var tempPath = ChannelsFilePath + ".tmp";

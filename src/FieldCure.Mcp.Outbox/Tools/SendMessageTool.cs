@@ -12,12 +12,6 @@ namespace FieldCure.Mcp.Outbox.Tools;
 [McpServerToolType]
 public static class SendMessageTool
 {
-    static readonly JsonSerializerOptions JsonOptions = new()
-    {
-        WriteIndented = true,
-        PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower,
-    };
-
     [McpServerTool(Name = "send_message", Destructive = true)]
     [Description(
         "Sends a message through a configured channel. " +
@@ -41,7 +35,7 @@ public static class SendMessageTool
     {
         var metadata = await store.GetByIdAsync(channel);
         if (metadata == null)
-            return JsonSerializer.Serialize(new { success = false, error = $"Channel not found: {channel}" }, JsonOptions);
+            return JsonSerializer.Serialize(new { success = false, error = $"Channel not found: {channel}" }, McpJson.Tool);
 
         IChannel ch;
         try
@@ -50,7 +44,7 @@ public static class SendMessageTool
         }
         catch (Exception ex)
         {
-            return JsonSerializer.Serialize(new { success = false, error = ex.Message }, JsonOptions);
+            return JsonSerializer.Serialize(new { success = false, error = ex.Message }, McpJson.Tool);
         }
 
         var request = new SendRequest
@@ -68,6 +62,6 @@ public static class SendMessageTool
             success = result.Success,
             error = result.Error,
             error_code = result.ErrorCode,
-        }, JsonOptions);
+        }, McpJson.Tool);
     }
 }
