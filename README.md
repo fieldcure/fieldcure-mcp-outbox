@@ -9,7 +9,7 @@ A multi-channel messaging [Model Context Protocol (MCP)](https://modelcontextpro
 
 - **Multiple messaging channels** — Slack, Telegram, Email (Gmail, Naver, Microsoft Graph API), KakaoTalk, Discord
 - **4 MCP tools** — `list_channels`, `add_channel`, `send_message`, `remove_channel`
-- **Secure credential storage** — secrets stored in Windows Credential Manager (DPAPI), never exposed to LLM
+- **Credential storage** — secrets stored in `channels.json`, never exposed to the LLM
 - **CLI channel setup** — interactive console for credential entry, launched as a subprocess
 - **SMTP presets** — Gmail, Naver with one-command setup
 - **Microsoft Graph API** — OAuth 2.0 browser flow for Outlook / M365 email with automatic token refresh
@@ -24,7 +24,7 @@ Existing MCP servers are channel-specific — one for Slack, another for Gmail, 
 Outbox takes a different approach:
 
 - **One tool, multiple channels** — `send_message` abstracts away channel differences. The LLM doesn't need to know Slack API vs SMTP vs Kakao REST.
-- **Credential isolation** — Secrets are entered through a separate console process and stored in Windows Credential Manager (DPAPI). They never flow through MCP stdio, so they're never visible to the LLM.
+- **Credential isolation** — Secrets are entered through a separate console process and stored in `channels.json`. They never flow through MCP stdio, so they're never visible to the LLM.
 - **Single install** — `dotnet tool install -g` gives you 4 channels. No need to install and configure separate servers per channel.
 - **KakaoTalk support** — Currently the only MCP server with KakaoTalk messaging, essential for Korean users.
 
@@ -49,7 +49,7 @@ dotnet build
 ## Requirements
 
 - [.NET 8.0 Runtime](https://dotnet.microsoft.com/download/dotnet/8.0) or later
-- Windows (required for Credential Manager)
+- Cross-platform (Windows, Linux, macOS)
 
 ## Configuration
 
@@ -108,7 +108,7 @@ Add to `.vscode/mcp.json`:
 
 ## Channels
 
-All channel credentials are stored securely in Windows Credential Manager (DPAPI).
+All channel credentials are stored in `channels.json` alongside channel metadata.
 No secrets are exposed in conversation history or config files.
 
 | Channel | Protocol | Setup |
@@ -143,7 +143,7 @@ fieldcure-mcp-outbox remove <id>          # Remove a channel
 | Data | Location |
 |------|----------|
 | Channel metadata | `%LOCALAPPDATA%\FieldCure\Mcp.Outbox\channels.json` |
-| Secrets | Windows Credential Manager (DPAPI) |
+| Secrets | `channels.json` (alongside metadata) |
 | Telegram sessions | `%LOCALAPPDATA%\FieldCure\Mcp.Outbox\sessions\` |
 | OAuth tokens (Microsoft, KakaoTalk) | `%LOCALAPPDATA%\FieldCure\Mcp.Outbox\tokens\` |
 
@@ -177,7 +177,7 @@ src/FieldCure.Mcp.Outbox/
 │   └── DiscordSetup.cs
 └── Configuration/
     ├── ChannelStore.cs         # channels.json persistence
-    ├── CredentialManager.cs    # Windows Credential Manager wrapper
+    ├── ChannelStore.cs         # Channel metadata + credential persistence
     └── SmtpPresets.cs          # SMTP preset definitions
 ```
 

@@ -1,6 +1,6 @@
 # FieldCure.Mcp.Outbox
 
-**Multi-channel messaging MCP server** — send messages through Slack, Telegram, Email (Gmail, Naver, Microsoft Graph API), KakaoTalk, and Discord with a single `send_message` tool. One install, one interface, multiple channels. Secrets stored securely in Windows Credential Manager, never exposed to the LLM.
+**Multi-channel messaging MCP server** — send messages through Slack, Telegram, Email (Gmail, Naver, Microsoft Graph API), KakaoTalk, and Discord with a single `send_message` tool. One install, one interface, multiple channels.
 
 ## Install
 
@@ -23,25 +23,9 @@ fieldcure-mcp-outbox
 
 ### Claude Desktop
 
-Add to `claude_desktop_config.json`:
-
 ```json
 {
   "mcpServers": {
-    "outbox": {
-      "command": "fieldcure-mcp-outbox"
-    }
-  }
-}
-```
-
-### VS Code (Copilot)
-
-Add to `.vscode/mcp.json`:
-
-```json
-{
-  "servers": {
     "outbox": {
       "command": "fieldcure-mcp-outbox"
     }
@@ -56,7 +40,7 @@ Add to `.vscode/mcp.json`:
 | `list_channels` | List all configured messaging channels | — |
 | `add_channel` | Add a new channel (opens setup console) | — |
 | `send_message` | Send a message through a channel | Required |
-| `remove_channel` | Remove a channel and credentials | Required |
+| `remove_channel` | Remove a channel and its data | Required |
 
 ## Channels
 
@@ -71,21 +55,17 @@ Add to `.vscode/mcp.json`:
 | **KakaoTalk** | Kakao REST API | OAuth 2.0 |
 | **Discord** | Webhook API | Webhook URL |
 
-## Security
+## Credential Storage
 
-- Secrets stored in **Windows Credential Manager** (DPAPI) — never exposed to LLM
-- Channel setup runs in a **separate console process** — credentials never pass through MCP stdio
-- `send_message` and `remove_channel` require **user confirmation** in the client
+Credentials are stored in `channels.json` alongside channel metadata. Channel setup runs in a separate console process — credentials never pass through MCP stdio.
 
 ## Requirements
 
 - [.NET 8.0 Runtime](https://dotnet.microsoft.com/download/dotnet/8.0) or later
-- Windows (required for Credential Manager)
 
 ## See Also
 
 Part of the [AssistStudio ecosystem](https://github.com/fieldcure/fieldcure-assiststudio#packages).
-## Links
 
 - [GitHub](https://github.com/fieldcure/fieldcure-mcp-outbox)
 - [MCP Specification](https://modelcontextprotocol.io)
