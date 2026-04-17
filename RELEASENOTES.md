@@ -19,7 +19,14 @@
 
 ### Migration
 
-Existing users must re-add channels after upgrading:
+Existing channels have metadata but no credentials in `channels.json`. Run the migration script to copy credentials from Windows Credential Manager:
+
+```powershell
+# From the repo root, or download the script from GitHub
+.\scripts\migrate-credentials.ps1
+```
+
+The script is idempotent — skips channels that already have credentials. Alternatively, re-add channels manually:
 
 ```bash
 fieldcure-mcp-outbox remove <channel-id>
