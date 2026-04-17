@@ -33,7 +33,6 @@ WTelegram.Helpers.Log = (_, _) => { };
 
 builder.Services
     .AddSingleton<ChannelStore>()
-    .AddSingleton<CredentialManager>()
     .AddHttpClient()
     .AddMcpServer(options =>
     {

@@ -19,7 +19,7 @@ public static class DiscordSetup
     /// <param name="store">The channel store for persistence.</param>
     /// <param name="credentials">The credential manager for storing the webhook URL.</param>
     /// <param name="name">Optional display name override.</param>
-    public static async Task RunAsync(ChannelStore store, CredentialManager credentials, string? name)
+    public static async Task RunAsync(ChannelStore store, string? name)
     {
         ConsoleHelper.PrintHeader("Add Discord Channel");
 
@@ -48,13 +48,12 @@ public static class DiscordSetup
 
         var id = $"discord_{channelName}";
 
-        credentials.Store($"FieldCure.Outbox:{id}", webhookUrl);
-
         await store.AddAsync(new ChannelMetadata
         {
             Id = id,
             Type = "discord",
             Name = channelName,
+            WebhookUrl = webhookUrl,
         });
 
         Console.WriteLine();

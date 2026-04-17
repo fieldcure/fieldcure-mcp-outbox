@@ -3,40 +3,30 @@ using FieldCure.Mcp.Outbox.Configuration;
 namespace FieldCure.Mcp.Outbox.Channels;
 
 /// <summary>
-/// Creates channel instances from stored metadata and credentials.
+/// Creates channel instances from stored metadata (including credentials).
+/// All secrets are stored in channels.json alongside channel configuration.
 /// </summary>
 public static class ChannelFactory
 {
-    /// <summary>
-    /// Creates an <see cref="IChannel"/> instance for the given channel metadata.
-    /// </summary>
-    /// <param name="metadata">The channel metadata describing the channel type and configuration.</param>
-    /// <param name="credentials">The credential manager for retrieving stored secrets.</param>
-    /// <param name="httpClientFactory">The HTTP client factory for channels that require HTTP access.</param>
     public static IChannel Create(
         ChannelMetadata metadata,
-        CredentialManager credentials,
         IHttpClientFactory httpClientFactory)
     {
         return metadata.Type switch
         {
-            "slack" => CreateSlack(metadata, credentials, httpClientFactory),
-            "telegram" => CreateTelegram(metadata, credentials),
-            "smtp" => CreateSmtp(metadata, credentials),
-            "kakaotalk" => CreateKakaoTalk(metadata, credentials, httpClientFactory),
-            "microsoft" => CreateMicrosoft(metadata, credentials, httpClientFactory),
-            "discord" => CreateDiscord(metadata, credentials, httpClientFactory),
+            "slack" => CreateSlack(metadata, httpClientFactory),
+            "telegram" => CreateTelegram(metadata),
+            "smtp" => CreateSmtp(metadata),
+            "kakaotalk" => CreateKakaoTalk(metadata, httpClientFactory),
+            "microsoft" => CreateMicrosoft(metadata, httpClientFactory),
+            "discord" => CreateDiscord(metadata, httpClientFactory),
             _ => throw new ArgumentException($"Unknown channel type: {metadata.Type}"),
         };
     }
 
-    /// <summary>
-    /// Creates a Slack channel from metadata and credentials.
-    /// </summary>
-    static SlackChannel CreateSlack(ChannelMetadata metadata, CredentialManager credentials,
-        IHttpClientFactory httpClientFactory)
+    static SlackChannel CreateSlack(ChannelMetadata metadata, IHttpClientFactory httpClientFactory)
     {
-        var botToken = credentials.Retrieve($"FieldCure.Outbox:{metadata.Id}")
+        var botToken = metadata.Token
             ?? throw new InvalidOperationException($"Bot token not found for channel '{metadata.Id}'.");
 
         return new SlackChannel(
@@ -47,19 +37,13 @@ public static class ChannelFactory
             httpClientFactory.CreateClient());
     }
 
-    /// <summary>
-    /// Creates a Telegram channel from metadata and credentials.
-    /// </summary>
-    static TelegramChannel CreateTelegram(ChannelMetadata metadata, CredentialManager credentials)
+    static TelegramChannel CreateTelegram(ChannelMetadata metadata)
     {
-        var apiCredential = credentials.Retrieve($"FieldCure.Outbox:{metadata.Id}:api")
-            ?? throw new InvalidOperationException($"API credentials not found for channel '{metadata.Id}'.");
-
-        var parts = apiCredential.Split(':', 2);
-        if (parts.Length != 2)
-            throw new InvalidOperationException($"Invalid API credential format for channel '{metadata.Id}'.");
-
-        var phone = credentials.Retrieve($"FieldCure.Outbox:{metadata.Id}:phone")
+        var apiId = metadata.ApiId
+            ?? throw new InvalidOperationException($"API ID not found for channel '{metadata.Id}'.");
+        var apiHash = metadata.ApiHash
+            ?? throw new InvalidOperationException($"API hash not found for channel '{metadata.Id}'.");
+        var phone = metadata.Phone
             ?? throw new InvalidOperationException($"Phone number not found for channel '{metadata.Id}'.");
 
         var dataDir = Path.Combine(
@@ -68,21 +52,17 @@ public static class ChannelFactory
 
         var sessionPath = Path.Combine(dataDir, $"{metadata.Id}.session");
 
-        return new TelegramChannel(metadata.Id, metadata.Name, parts[0], parts[1], phone, sessionPath);
+        return new TelegramChannel(metadata.Id, metadata.Name, apiId, apiHash, phone, sessionPath);
     }
 
-    /// <summary>
-    /// Creates an SMTP channel from metadata and credentials.
-    /// </summary>
-    static SmtpChannel CreateSmtp(ChannelMetadata metadata, CredentialManager credentials)
+    static SmtpChannel CreateSmtp(ChannelMetadata metadata)
     {
-        var password = credentials.Retrieve($"FieldCure.Outbox:{metadata.Id}")
+        var password = metadata.Password
             ?? throw new InvalidOperationException($"Password not found for channel '{metadata.Id}'.");
 
         var from = metadata.From
             ?? throw new InvalidOperationException($"'from' address not set for channel '{metadata.Id}'.");
 
-        // Naver SMTP requires the Naver ID (without @naver.com) as username
         var username = metadata.Provider == "naver" && from.Contains('@')
             ? from[..from.IndexOf('@')]
             : from;
@@ -98,16 +78,10 @@ public static class ChannelFactory
             password);
     }
 
-    /// <summary>
-    /// Creates a KakaoTalk channel from metadata and credentials.
-    /// </summary>
-    static KakaoTalkChannel CreateKakaoTalk(ChannelMetadata metadata, CredentialManager credentials,
-        IHttpClientFactory httpClientFactory)
+    static KakaoTalkChannel CreateKakaoTalk(ChannelMetadata metadata, IHttpClientFactory httpClientFactory)
     {
-        var apiKey = credentials.Retrieve($"FieldCure.Outbox:{metadata.Id}:api_key")
+        var apiKey = metadata.ApiKey
             ?? throw new InvalidOperationException($"API key not found for channel '{metadata.Id}'.");
-
-        var clientSecret = credentials.Retrieve($"FieldCure.Outbox:{metadata.Id}:client_secret");
 
         var tokenPath = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
@@ -117,21 +91,17 @@ public static class ChannelFactory
             metadata.Id,
             metadata.Name,
             apiKey,
-            clientSecret,
+            metadata.ClientSecret,
             tokenPath,
             httpClientFactory.CreateClient());
     }
 
-    /// <summary>
-    /// Creates a Microsoft Graph API channel from metadata and credentials.
-    /// </summary>
-    static MicrosoftChannel CreateMicrosoft(ChannelMetadata metadata, CredentialManager credentials,
-        IHttpClientFactory httpClientFactory)
+    static MicrosoftChannel CreateMicrosoft(ChannelMetadata metadata, IHttpClientFactory httpClientFactory)
     {
-        var clientId = credentials.Retrieve($"FieldCure.Outbox:{metadata.Id}:client_id")
+        var clientId = metadata.ClientId
             ?? throw new InvalidOperationException($"Client ID not found for channel '{metadata.Id}'.");
 
-        var clientSecret = credentials.Retrieve($"FieldCure.Outbox:{metadata.Id}:client_secret")
+        var clientSecret = metadata.ClientSecret
             ?? throw new InvalidOperationException($"Client secret not found for channel '{metadata.Id}'.");
 
         var tokenPath = Path.Combine(
@@ -147,13 +117,9 @@ public static class ChannelFactory
             httpClientFactory.CreateClient());
     }
 
-    /// <summary>
-    /// Creates a Discord channel from metadata and credentials.
-    /// </summary>
-    static DiscordChannel CreateDiscord(ChannelMetadata metadata, CredentialManager credentials,
-        IHttpClientFactory httpClientFactory)
+    static DiscordChannel CreateDiscord(ChannelMetadata metadata, IHttpClientFactory httpClientFactory)
     {
-        var webhookUrl = credentials.Retrieve($"FieldCure.Outbox:{metadata.Id}")
+        var webhookUrl = metadata.WebhookUrl
             ?? throw new InvalidOperationException($"Webhook URL not found for channel '{metadata.Id}'.");
 
         return new DiscordChannel(

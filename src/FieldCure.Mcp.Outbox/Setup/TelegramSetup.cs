@@ -13,7 +13,7 @@ public static class TelegramSetup
     /// <param name="store">The channel store for persistence.</param>
     /// <param name="credentials">The credential manager for storing API credentials.</param>
     /// <param name="name">Optional display name override.</param>
-    public static async Task RunAsync(ChannelStore store, CredentialManager credentials, string? name)
+    public static async Task RunAsync(ChannelStore store, string? name)
     {
         ConsoleHelper.PrintHeader("Add Telegram Channel");
 
@@ -82,16 +82,14 @@ public static class TelegramSetup
             ? phone[..^4] + "****"
             : phone;
 
-        // Store credentials
-        credentials.Store($"FieldCure.Outbox:{id}:api", $"{apiId}:{apiHash}");
-        credentials.Store($"FieldCure.Outbox:{id}:phone", phone);
-
         await store.AddAsync(new ChannelMetadata
         {
             Id = id,
             Type = "telegram",
             Name = displayName,
-            Phone = maskedPhone,
+            ApiId = apiId,
+            ApiHash = apiHash,
+            Phone = phone,
         });
 
         ConsoleHelper.PrintSuccess($"Channel '{id}' added.");

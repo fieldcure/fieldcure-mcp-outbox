@@ -24,7 +24,7 @@ public static class SmtpSetup
     /// </param>
     /// <param name="name">Optional display name override.</param>
     public static async Task RunAsync(
-        ChannelStore store, CredentialManager credentials, string? providerShortcut, string? name)
+        ChannelStore store, string? providerShortcut, string? name)
     {
         ConsoleHelper.PrintHeader("Add SMTP Channel");
 
@@ -130,9 +130,6 @@ public static class SmtpSetup
         var id = $"smtp_{provider}_{smtpCount + 1}";
         var displayName = name ?? displayLabel;
 
-        // Store credentials
-        credentials.Store($"FieldCure.Outbox:{id}", password);
-
         await store.AddAsync(new ChannelMetadata
         {
             Id = id,
@@ -143,6 +140,7 @@ public static class SmtpSetup
             Host = host2,
             Port = port,
             Tls = tls,
+            Password = password,
         });
 
         Console.WriteLine();

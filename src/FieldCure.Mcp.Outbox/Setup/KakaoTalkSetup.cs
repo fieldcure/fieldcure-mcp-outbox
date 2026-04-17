@@ -17,7 +17,7 @@ public static class KakaoTalkSetup
     /// <param name="store">The channel store for persistence.</param>
     /// <param name="credentials">The credential manager for storing API keys.</param>
     /// <param name="name">Optional display name override.</param>
-    public static async Task RunAsync(ChannelStore store, CredentialManager credentials, string? name)
+    public static async Task RunAsync(ChannelStore store, string? name)
     {
         ConsoleHelper.PrintHeader("Add KakaoTalk Channel");
 
@@ -129,16 +129,13 @@ public static class KakaoTalkSetup
 
         Console.WriteLine("Token received and saved.");
 
-        // Store credentials
-        credentials.Store($"FieldCure.Outbox:{id}:api_key", apiKey);
-        if (!string.IsNullOrWhiteSpace(clientSecret))
-            credentials.Store($"FieldCure.Outbox:{id}:client_secret", clientSecret);
-
         await store.AddAsync(new ChannelMetadata
         {
             Id = id,
             Type = "kakaotalk",
             Name = displayName,
+            ApiKey = apiKey,
+            ClientSecret = string.IsNullOrWhiteSpace(clientSecret) ? null : clientSecret,
         });
 
         ConsoleHelper.PrintSuccess($"Channel '{id}' added.");

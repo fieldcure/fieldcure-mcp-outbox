@@ -12,10 +12,6 @@ public static class SetupRunner
         "slack", "telegram", "gmail", "naver", "smtp", "kakaotalk", "microsoft", "discord"
     };
 
-    /// <summary>
-    /// Runs the interactive channel setup flow for the given type.
-    /// </summary>
-    /// <param name="args">CLI arguments: type [--name name].</param>
     public static async Task<int> RunAddAsync(string[] args)
     {
         if (args.Length == 0)
@@ -44,33 +40,32 @@ public static class SetupRunner
         }
 
         var store = new ChannelStore();
-        var credentials = new CredentialManager();
 
         try
         {
             switch (type)
             {
                 case "slack":
-                    await SlackSetup.RunAsync(store, credentials, name);
+                    await SlackSetup.RunAsync(store, name);
                     break;
                 case "telegram":
-                    await TelegramSetup.RunAsync(store, credentials, name);
+                    await TelegramSetup.RunAsync(store, name);
                     break;
                 case "gmail":
                 case "naver":
-                    await SmtpSetup.RunAsync(store, credentials, providerShortcut: type, name);
+                    await SmtpSetup.RunAsync(store, providerShortcut: type, name);
                     break;
                 case "microsoft":
-                    await MicrosoftSetup.RunAsync(store, credentials, name);
+                    await MicrosoftSetup.RunAsync(store, name);
                     break;
                 case "smtp":
-                    await SmtpSetup.RunAsync(store, credentials, providerShortcut: null, name);
+                    await SmtpSetup.RunAsync(store, providerShortcut: null, name);
                     break;
                 case "kakaotalk":
-                    await KakaoTalkSetup.RunAsync(store, credentials, name);
+                    await KakaoTalkSetup.RunAsync(store, name);
                     break;
                 case "discord":
-                    await DiscordSetup.RunAsync(store, credentials, name);
+                    await DiscordSetup.RunAsync(store, name);
                     break;
             }
 
@@ -84,9 +79,6 @@ public static class SetupRunner
         }
     }
 
-    /// <summary>
-    /// Lists all configured channels in a tabular format.
-    /// </summary>
     public static async Task<int> RunListAsync()
     {
         var store = new ChannelStore();
@@ -109,10 +101,6 @@ public static class SetupRunner
         return 0;
     }
 
-    /// <summary>
-    /// Removes a channel by ID, cleaning up credentials and session files.
-    /// </summary>
-    /// <param name="args">CLI arguments: channel-id.</param>
     public static async Task<int> RunRemoveAsync(string[] args)
     {
         if (args.Length == 0)
@@ -123,7 +111,6 @@ public static class SetupRunner
 
         var channelId = args[0];
         var store = new ChannelStore();
-        var credentials = new CredentialManager();
 
         var channel = await store.GetByIdAsync(channelId);
         if (channel == null)
@@ -132,51 +119,13 @@ public static class SetupRunner
             return 1;
         }
 
-        // Delete credentials based on channel type
-        DeleteChannelCredentials(credentials, channel);
-
-        // Delete session/token files
         DeleteChannelFiles(store, channel);
-
         await store.RemoveAsync(channelId);
 
         Console.WriteLine($"Channel '{channelId}' removed.");
         return 0;
     }
 
-    /// <summary>
-    /// Deletes stored credentials for a channel based on its type.
-    /// </summary>
-    internal static void DeleteChannelCredentials(CredentialManager credentials, ChannelMetadata channel)
-    {
-        switch (channel.Type)
-        {
-            case "slack":
-                credentials.Delete($"FieldCure.Outbox:{channel.Id}");
-                break;
-            case "telegram":
-                credentials.Delete($"FieldCure.Outbox:{channel.Id}:api");
-                break;
-            case "smtp":
-                credentials.Delete($"FieldCure.Outbox:{channel.Id}");
-                break;
-            case "kakaotalk":
-                credentials.Delete($"FieldCure.Outbox:{channel.Id}:api_key");
-                credentials.Delete($"FieldCure.Outbox:{channel.Id}:client_secret");
-                break;
-            case "microsoft":
-                credentials.Delete($"FieldCure.Outbox:{channel.Id}:client_id");
-                credentials.Delete($"FieldCure.Outbox:{channel.Id}:client_secret");
-                break;
-            case "discord":
-                credentials.Delete($"FieldCure.Outbox:{channel.Id}");
-                break;
-        }
-    }
-
-    /// <summary>
-    /// Deletes session or token files associated with a channel.
-    /// </summary>
     internal static void DeleteChannelFiles(ChannelStore store, ChannelMetadata channel)
     {
         switch (channel.Type)

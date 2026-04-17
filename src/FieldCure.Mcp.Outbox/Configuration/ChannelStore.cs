@@ -100,7 +100,15 @@ public class ChannelMetadata
     public required string Name { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
+    // ── Credentials (stored in channels.json alongside metadata) ──
+
+    // Slack
+    public string? Token { get; set; }
+    public string? DefaultChannel { get; set; }
+
     // Telegram
+    public string? ApiId { get; set; }
+    public string? ApiHash { get; set; }
     public string? Phone { get; set; }
 
     // SMTP
@@ -109,7 +117,16 @@ public class ChannelMetadata
     public string? Host { get; set; }
     public int? Port { get; set; }
     public bool? Tls { get; set; }
+    public string? Password { get; set; }
 
-    // Slack
-    public string? DefaultChannel { get; set; }
+    // KakaoTalk
+    public string? ApiKey { get; set; }
+    public string? ClientSecret { get; set; }
+
+    // Microsoft
+    public string? ClientId { get; set; }
+    // ClientSecret reused from KakaoTalk field above (same name)
+
+    // Discord
+    public string? WebhookUrl { get; set; }
 }

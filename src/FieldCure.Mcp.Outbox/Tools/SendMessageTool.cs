@@ -19,7 +19,6 @@ public static class SendMessageTool
         "For Slack channels, 'target_channel' can override the default channel.")]
     public static async Task<string> SendMessage(
         ChannelStore store,
-        CredentialManager credentials,
         IHttpClientFactory httpClientFactory,
         [Description("Channel ID to send through (e.g. 'slack_dev-alerts', 'smtp_gmail_1')")]
         string channel,
@@ -40,7 +39,7 @@ public static class SendMessageTool
         IChannel ch;
         try
         {
-            ch = ChannelFactory.Create(metadata, credentials, httpClientFactory);
+            ch = ChannelFactory.Create(metadata, httpClientFactory);
         }
         catch (Exception ex)
         {

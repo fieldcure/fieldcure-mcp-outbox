@@ -18,7 +18,7 @@ public static class MicrosoftSetup
     /// <param name="store">The channel store for persistence.</param>
     /// <param name="credentials">The credential manager for storing client credentials.</param>
     /// <param name="name">Optional display name override.</param>
-    public static async Task RunAsync(ChannelStore store, CredentialManager credentials, string? name)
+    public static async Task RunAsync(ChannelStore store, string? name)
     {
         ConsoleHelper.PrintHeader("Add Microsoft Channel");
 
@@ -174,10 +174,6 @@ public static class MicrosoftSetup
 
         Console.WriteLine("Token saved.");
 
-        // Store client credentials separately (client secret may contain ':')
-        credentials.Store($"FieldCure.Outbox:{id}:client_id", clientId);
-        credentials.Store($"FieldCure.Outbox:{id}:client_secret", clientSecret);
-
         await store.AddAsync(new ChannelMetadata
         {
             Id = id,
@@ -185,6 +181,8 @@ public static class MicrosoftSetup
             Name = displayName,
             From = userEmail,
             Provider = "microsoft",
+            ClientId = clientId,
+            ClientSecret = clientSecret,
         });
 
         ConsoleHelper.PrintSuccess($"Channel '{id}' added.");

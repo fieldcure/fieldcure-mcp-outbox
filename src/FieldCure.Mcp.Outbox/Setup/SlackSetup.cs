@@ -13,7 +13,7 @@ public static class SlackSetup
     /// <param name="store">The channel store for persistence.</param>
     /// <param name="credentials">The credential manager for storing the bot token.</param>
     /// <param name="name">Optional display name override.</param>
-    public static async Task RunAsync(ChannelStore store, CredentialManager credentials, string? name)
+    public static async Task RunAsync(ChannelStore store, string? name)
     {
         ConsoleHelper.PrintHeader("Add Slack Channel");
 
@@ -35,13 +35,12 @@ public static class SlackSetup
 
         var id = $"slack_{channelName}";
 
-        credentials.Store($"FieldCure.Outbox:{id}", botToken);
-
         await store.AddAsync(new ChannelMetadata
         {
             Id = id,
             Type = "slack",
             Name = channelName,
+            Token = botToken,
             DefaultChannel = channelName,
         });
 
