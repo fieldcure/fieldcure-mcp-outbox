@@ -8,13 +8,13 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
 
-    <Version>1.1.0</Version>
+    <Version>2.0.0</Version>
     <PackageId>FieldCure.Mcp.Outbox</PackageId>
 
     <Authors>Jong Hyun Kim</Authors>
     <Company>Fieldcure Co., Ltd.</Company>
     <Copyright>Copyright (c) 2026 Fieldcure Co., Ltd.</Copyright>
-    <Description>MCP server for multi-channel messaging. Supports Slack, Telegram, Email (Gmail, Naver, Microsoft Graph API), KakaoTalk, and Discord via stdio transport. Windows only. Cross-platform support planned.</Description>
+    <Description>MCP server for multi-channel messaging. Supports Slack, Telegram, Email (Gmail, Naver, Microsoft Graph API), KakaoTalk, and Discord via stdio transport.</Description>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/fieldcure/fieldcure-mcp-outbox</PackageProjectUrl>
     <RepositoryUrl>https://github.com/fieldcure/fieldcure-mcp-outbox</RepositoryUrl>
@@ -22,7 +22,7 @@
     <PackageTags>mcp;mcp-server;ai;dotnet;email;smtp;slack;telegram;kakaotalk;discord;notification</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageIcon>Logo.png</PackageIcon>
-    <PackageReleaseNotes>v1.1.0: Centralize JsonSerializerOptions into McpJson.Options shared class.</PackageReleaseNotes>
+    <PackageReleaseNotes>v2.0.0: Remove Windows Credential Manager dependency. Credentials stored in channels.json. Cross-platform support. Breaking: existing channels must be re-added.</PackageReleaseNotes>
 
     <PackageType>McpServer</PackageType>
     <PackAsTool>true</PackAsTool>

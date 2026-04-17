@@ -1,9 +1,7 @@
-# FieldCure MCP Outbox Server
+﻿# FieldCure MCP Outbox Server
 
 [![NuGet](https://img.shields.io/nuget/v/FieldCure.Mcp.Outbox)](https://www.nuget.org/packages/FieldCure.Mcp.Outbox)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/fieldcure/fieldcure-mcp-outbox/blob/main/LICENSE)
-
-> **Windows only** — credential storage uses Windows Credential Manager (`advapi32.dll`). Cross-platform support is planned via a shared credential abstraction package.
 
 A multi-channel messaging [Model Context Protocol (MCP)](https://modelcontextprotocol.io) server that sends messages through Slack, Telegram, Email (Gmail, Naver, Microsoft Graph API), KakaoTalk, and Discord. Built with C# and the official [MCP C# SDK](https://github.com/modelcontextprotocol/csharp-sdk).
 

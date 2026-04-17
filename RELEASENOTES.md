@@ -1,5 +1,33 @@
 # Release Notes
 
+## v2.0.0 (2026-04-17)
+
+### Breaking
+
+- **Remove Windows Credential Manager dependency** — credentials are now stored in `channels.json` alongside channel metadata instead of Windows Credential Manager (advapi32.dll). Existing channels must be re-added via `add` command. This makes the package genuinely cross-platform.
+- **`ChannelFactory.Create()` signature change** — `CredentialManager` parameter removed; credentials read from `ChannelMetadata` directly.
+
+### Changed
+
+- **Cross-platform support** — `net8.0` TFM is no longer misleading; no Windows-specific P/Invoke remains
+- **Simplified credential flow** — `add` CLI stores credentials directly in `channels.json`; `remove` CLI deletes the channel entry (no separate credential cleanup needed)
+
+### Removed
+
+- `CredentialManager.cs` (Windows Credential Manager P/Invoke wrapper)
+- `DeleteChannelCredentials()` in `SetupRunner` (credentials removed with channel entry)
+
+### Migration
+
+Existing users must re-add channels after upgrading:
+
+```bash
+fieldcure-mcp-outbox remove <channel-id>
+fieldcure-mcp-outbox add <type>
+```
+
+---
+
 ## v1.1.0 (2026-04-14)
 
 ### Changed

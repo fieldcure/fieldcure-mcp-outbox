@@ -1,7 +1,5 @@
 # FieldCure.Mcp.Outbox
 
-> **Windows only** — credential storage uses Windows Credential Manager (`advapi32.dll`). Cross-platform support is planned via a shared credential abstraction package.
-
 **Multi-channel messaging MCP server** — send messages through Slack, Telegram, Email (Gmail, Naver, Microsoft Graph API), KakaoTalk, and Discord with a single `send_message` tool. One install, one interface, multiple channels. Secrets stored securely in Windows Credential Manager, never exposed to the LLM.
 
 ## Install
