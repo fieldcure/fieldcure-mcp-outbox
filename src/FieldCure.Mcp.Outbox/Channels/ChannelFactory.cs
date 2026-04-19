@@ -3,30 +3,30 @@ using FieldCure.Mcp.Outbox.Configuration;
 namespace FieldCure.Mcp.Outbox.Channels;
 
 /// <summary>
-/// Creates channel instances from stored metadata (including credentials).
-/// All secrets are stored in channels.json alongside channel configuration.
+/// Creates channel instances from stored metadata plus runtime-resolved secrets.
 /// </summary>
 public static class ChannelFactory
 {
     public static IChannel Create(
         ChannelMetadata metadata,
+        ChannelResolvedSecrets? secrets,
         IHttpClientFactory httpClientFactory)
     {
         return metadata.Type switch
         {
-            "slack" => CreateSlack(metadata, httpClientFactory),
-            "telegram" => CreateTelegram(metadata),
-            "smtp" => CreateSmtp(metadata),
-            "kakaotalk" => CreateKakaoTalk(metadata, httpClientFactory),
-            "microsoft" => CreateMicrosoft(metadata, httpClientFactory),
-            "discord" => CreateDiscord(metadata, httpClientFactory),
+            "slack" => CreateSlack(metadata, secrets, httpClientFactory),
+            "telegram" => CreateTelegram(metadata, secrets),
+            "smtp" => CreateSmtp(metadata, secrets),
+            "kakaotalk" => CreateKakaoTalk(metadata, secrets, httpClientFactory),
+            "microsoft" => CreateMicrosoft(metadata, secrets, httpClientFactory),
+            "discord" => CreateDiscord(metadata, secrets, httpClientFactory),
             _ => throw new ArgumentException($"Unknown channel type: {metadata.Type}"),
         };
     }
 
-    static SlackChannel CreateSlack(ChannelMetadata metadata, IHttpClientFactory httpClientFactory)
+    static SlackChannel CreateSlack(ChannelMetadata metadata, ChannelResolvedSecrets? secrets, IHttpClientFactory httpClientFactory)
     {
-        var botToken = metadata.Token
+        var botToken = secrets?.BotToken ?? metadata.Token
             ?? throw new InvalidOperationException($"Bot token not found for channel '{metadata.Id}'.");
 
         return new SlackChannel(
@@ -37,11 +37,11 @@ public static class ChannelFactory
             httpClientFactory.CreateClient());
     }
 
-    static TelegramChannel CreateTelegram(ChannelMetadata metadata)
+    static TelegramChannel CreateTelegram(ChannelMetadata metadata, ChannelResolvedSecrets? secrets)
     {
         var apiId = metadata.ApiId
             ?? throw new InvalidOperationException($"API ID not found for channel '{metadata.Id}'.");
-        var apiHash = metadata.ApiHash
+        var apiHash = secrets?.ApiHash ?? metadata.ApiHash
             ?? throw new InvalidOperationException($"API hash not found for channel '{metadata.Id}'.");
         var phone = metadata.Phone
             ?? throw new InvalidOperationException($"Phone number not found for channel '{metadata.Id}'.");
@@ -55,9 +55,9 @@ public static class ChannelFactory
         return new TelegramChannel(metadata.Id, metadata.Name, apiId, apiHash, phone, sessionPath);
     }
 
-    static SmtpChannel CreateSmtp(ChannelMetadata metadata)
+    static SmtpChannel CreateSmtp(ChannelMetadata metadata, ChannelResolvedSecrets? secrets)
     {
-        var password = metadata.Password
+        var password = secrets?.Password ?? metadata.Password
             ?? throw new InvalidOperationException($"Password not found for channel '{metadata.Id}'.");
 
         var from = metadata.From
@@ -78,9 +78,9 @@ public static class ChannelFactory
             password);
     }
 
-    static KakaoTalkChannel CreateKakaoTalk(ChannelMetadata metadata, IHttpClientFactory httpClientFactory)
+    static KakaoTalkChannel CreateKakaoTalk(ChannelMetadata metadata, ChannelResolvedSecrets? secrets, IHttpClientFactory httpClientFactory)
     {
-        var apiKey = metadata.ApiKey
+        var apiKey = secrets?.ApiKey ?? metadata.ApiKey
             ?? throw new InvalidOperationException($"API key not found for channel '{metadata.Id}'.");
 
         var tokenPath = Path.Combine(
@@ -91,17 +91,17 @@ public static class ChannelFactory
             metadata.Id,
             metadata.Name,
             apiKey,
-            metadata.ClientSecret,
+            secrets?.ClientSecret ?? metadata.ClientSecret,
             tokenPath,
             httpClientFactory.CreateClient());
     }
 
-    static MicrosoftChannel CreateMicrosoft(ChannelMetadata metadata, IHttpClientFactory httpClientFactory)
+    static MicrosoftChannel CreateMicrosoft(ChannelMetadata metadata, ChannelResolvedSecrets? secrets, IHttpClientFactory httpClientFactory)
     {
         var clientId = metadata.ClientId
             ?? throw new InvalidOperationException($"Client ID not found for channel '{metadata.Id}'.");
 
-        var clientSecret = metadata.ClientSecret
+        var clientSecret = secrets?.ClientSecret ?? metadata.ClientSecret
             ?? throw new InvalidOperationException($"Client secret not found for channel '{metadata.Id}'.");
 
         var tokenPath = Path.Combine(
@@ -117,9 +117,9 @@ public static class ChannelFactory
             httpClientFactory.CreateClient());
     }
 
-    static DiscordChannel CreateDiscord(ChannelMetadata metadata, IHttpClientFactory httpClientFactory)
+    static DiscordChannel CreateDiscord(ChannelMetadata metadata, ChannelResolvedSecrets? secrets, IHttpClientFactory httpClientFactory)
     {
-        var webhookUrl = metadata.WebhookUrl
+        var webhookUrl = secrets?.WebhookUrl ?? metadata.WebhookUrl
             ?? throw new InvalidOperationException($"Webhook URL not found for channel '{metadata.Id}'.");
 
         return new DiscordChannel(

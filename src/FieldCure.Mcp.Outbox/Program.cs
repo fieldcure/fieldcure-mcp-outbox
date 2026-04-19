@@ -1,6 +1,7 @@
 ﻿using System.Reflection;
 using System.Text;
 using FieldCure.Mcp.Outbox.Configuration;
+using FieldCure.Mcp.Outbox.Credentials;
 using FieldCure.Mcp.Outbox.Setup;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -33,6 +34,7 @@ WTelegram.Helpers.Log = (_, _) => { };
 
 builder.Services
     .AddSingleton<ChannelStore>()
+    .AddSingleton<OutboxSecretResolver>()
     .AddHttpClient()
     .AddMcpServer(options =>
     {

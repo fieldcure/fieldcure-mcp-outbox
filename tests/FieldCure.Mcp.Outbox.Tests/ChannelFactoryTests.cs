@@ -18,7 +18,7 @@ public class ChannelFactoryTests
             DefaultChannel = "general",
         };
 
-        var channel = ChannelFactory.Create(metadata, new TestHttpClientFactory());
+        var channel = ChannelFactory.Create(metadata, null, new TestHttpClientFactory());
 
         Assert.IsInstanceOfType(channel, typeof(SlackChannel));
         Assert.AreEqual("test_slack", channel.Id);
@@ -37,7 +37,7 @@ public class ChannelFactoryTests
             ClientSecret = "test-client-secret",
         };
 
-        var channel = ChannelFactory.Create(metadata, new TestHttpClientFactory());
+        var channel = ChannelFactory.Create(metadata, null, new TestHttpClientFactory());
 
         Assert.IsInstanceOfType(channel, typeof(MicrosoftChannel));
         Assert.AreEqual("test_microsoft", channel.Id);
@@ -54,7 +54,7 @@ public class ChannelFactoryTests
             WebhookUrl = "https://discord.com/api/webhooks/123/abc",
         };
 
-        var channel = ChannelFactory.Create(metadata, new TestHttpClientFactory());
+        var channel = ChannelFactory.Create(metadata, null, new TestHttpClientFactory());
 
         Assert.IsInstanceOfType(channel, typeof(DiscordChannel));
         Assert.AreEqual("test_discord", channel.Id);
@@ -71,7 +71,7 @@ public class ChannelFactoryTests
         };
 
         Assert.ThrowsExactly<ArgumentException>(() =>
-            ChannelFactory.Create(metadata, new TestHttpClientFactory()));
+            ChannelFactory.Create(metadata, null, new TestHttpClientFactory()));
     }
 
     class TestHttpClientFactory : IHttpClientFactory
