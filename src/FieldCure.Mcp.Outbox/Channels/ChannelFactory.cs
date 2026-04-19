@@ -10,15 +10,16 @@ public static class ChannelFactory
     public static IChannel Create(
         ChannelMetadata metadata,
         ChannelResolvedSecrets? secrets,
-        IHttpClientFactory httpClientFactory)
+        IHttpClientFactory httpClientFactory,
+        OAuthTokenStore tokenStore)
     {
         return metadata.Type switch
         {
             "slack" => CreateSlack(metadata, secrets, httpClientFactory),
             "telegram" => CreateTelegram(metadata, secrets),
             "smtp" => CreateSmtp(metadata, secrets),
-            "kakaotalk" => CreateKakaoTalk(metadata, secrets, httpClientFactory),
-            "microsoft" => CreateMicrosoft(metadata, secrets, httpClientFactory),
+            "kakaotalk" => CreateKakaoTalk(metadata, secrets, httpClientFactory, tokenStore),
+            "microsoft" => CreateMicrosoft(metadata, secrets, httpClientFactory, tokenStore),
             "discord" => CreateDiscord(metadata, secrets, httpClientFactory),
             _ => throw new ArgumentException($"Unknown channel type: {metadata.Type}"),
         };
@@ -78,25 +79,21 @@ public static class ChannelFactory
             password);
     }
 
-    static KakaoTalkChannel CreateKakaoTalk(ChannelMetadata metadata, ChannelResolvedSecrets? secrets, IHttpClientFactory httpClientFactory)
+    static KakaoTalkChannel CreateKakaoTalk(ChannelMetadata metadata, ChannelResolvedSecrets? secrets, IHttpClientFactory httpClientFactory, OAuthTokenStore tokenStore)
     {
         var apiKey = secrets?.ApiKey ?? metadata.ApiKey
             ?? throw new InvalidOperationException($"API key not found for channel '{metadata.Id}'.");
-
-        var tokenPath = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "FieldCure", "Mcp.Outbox", "tokens", $"{metadata.Id}.json");
 
         return new KakaoTalkChannel(
             metadata.Id,
             metadata.Name,
             apiKey,
             secrets?.ClientSecret ?? metadata.ClientSecret,
-            tokenPath,
+            tokenStore,
             httpClientFactory.CreateClient());
     }
 
-    static MicrosoftChannel CreateMicrosoft(ChannelMetadata metadata, ChannelResolvedSecrets? secrets, IHttpClientFactory httpClientFactory)
+    static MicrosoftChannel CreateMicrosoft(ChannelMetadata metadata, ChannelResolvedSecrets? secrets, IHttpClientFactory httpClientFactory, OAuthTokenStore tokenStore)
     {
         var clientId = metadata.ClientId
             ?? throw new InvalidOperationException($"Client ID not found for channel '{metadata.Id}'.");
@@ -104,16 +101,12 @@ public static class ChannelFactory
         var clientSecret = secrets?.ClientSecret ?? metadata.ClientSecret
             ?? throw new InvalidOperationException($"Client secret not found for channel '{metadata.Id}'.");
 
-        var tokenPath = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "FieldCure", "Mcp.Outbox", "tokens", $"{metadata.Id}.json");
-
         return new MicrosoftChannel(
             metadata.Id,
             metadata.Name,
             clientId,
             clientSecret,
-            tokenPath,
+            tokenStore,
             httpClientFactory.CreateClient());
     }
 

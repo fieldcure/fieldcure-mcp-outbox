@@ -7,14 +7,13 @@ namespace FieldCure.Mcp.Outbox.Configuration;
 /// </summary>
 public class ChannelStore
 {
-
     public string DataDirectory { get; }
 
     string ChannelsFilePath => Path.Combine(DataDirectory, "channels.json");
 
-    public ChannelStore()
+    public ChannelStore(string? dataDirectory = null)
     {
-        DataDirectory = Path.Combine(
+        DataDirectory = dataDirectory ?? Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
             "FieldCure", "Mcp.Outbox");
     }

@@ -24,7 +24,7 @@ public static class RemoveChannelTool
         if (metadata == null)
             return JsonSerializer.Serialize(new { status = "error", error = $"Channel not found: {channel}" }, McpJson.Tool);
 
-        SetupRunner.DeleteChannelFiles(store, metadata);
+        await SetupRunner.DeleteChannelFilesAsync(store, metadata);
         await store.RemoveAsync(channel);
 
         return JsonSerializer.Serialize(new { status = "ok", removed = channel }, McpJson.Tool);

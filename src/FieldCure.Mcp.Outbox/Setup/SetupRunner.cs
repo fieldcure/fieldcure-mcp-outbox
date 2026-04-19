@@ -40,6 +40,7 @@ public static class SetupRunner
         }
 
         var store = new ChannelStore();
+        var tokenStore = new OAuthTokenStore(store.DataDirectory);
 
         try
         {
@@ -56,13 +57,13 @@ public static class SetupRunner
                     await SmtpSetup.RunAsync(store, providerShortcut: type, name);
                     break;
                 case "microsoft":
-                    await MicrosoftSetup.RunAsync(store, name);
+                    await MicrosoftSetup.RunAsync(store, tokenStore, name);
                     break;
                 case "smtp":
                     await SmtpSetup.RunAsync(store, providerShortcut: null, name);
                     break;
                 case "kakaotalk":
-                    await KakaoTalkSetup.RunAsync(store, name);
+                    await KakaoTalkSetup.RunAsync(store, tokenStore, name);
                     break;
                 case "discord":
                     await DiscordSetup.RunAsync(store, name);
@@ -119,14 +120,14 @@ public static class SetupRunner
             return 1;
         }
 
-        DeleteChannelFiles(store, channel);
+        await DeleteChannelFilesAsync(store, channel);
         await store.RemoveAsync(channelId);
 
         Console.WriteLine($"Channel '{channelId}' removed.");
         return 0;
     }
 
-    internal static void DeleteChannelFiles(ChannelStore store, ChannelMetadata channel)
+    internal static async Task DeleteChannelFilesAsync(ChannelStore store, ChannelMetadata channel)
     {
         switch (channel.Type)
         {
@@ -140,9 +141,8 @@ public static class SetupRunner
             case "kakaotalk":
             case "microsoft":
             {
-                var tokenPath = Path.Combine(store.DataDirectory, "tokens", $"{channel.Id}.json");
-                if (File.Exists(tokenPath))
-                    File.Delete(tokenPath);
+                var tokenStore = new OAuthTokenStore(store.DataDirectory);
+                await tokenStore.RemoveAsync(channel.Id);
                 break;
             }
         }

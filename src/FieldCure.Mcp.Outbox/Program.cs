@@ -34,6 +34,7 @@ WTelegram.Helpers.Log = (_, _) => { };
 
 builder.Services
     .AddSingleton<ChannelStore>()
+    .AddSingleton<OAuthTokenStore>()
     .AddSingleton<OutboxSecretResolver>()
     .AddHttpClient()
     .AddMcpServer(options =>

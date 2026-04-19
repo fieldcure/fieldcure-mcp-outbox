@@ -18,7 +18,7 @@ public static class MicrosoftSetup
     /// <param name="store">The channel store for persistence.</param>
     /// <param name="credentials">The credential manager for storing client credentials.</param>
     /// <param name="name">Optional display name override.</param>
-    public static async Task RunAsync(ChannelStore store, string? name)
+    public static async Task RunAsync(ChannelStore store, OAuthTokenStore tokenStore, string? name)
     {
         ConsoleHelper.PrintHeader("Add Microsoft Channel");
 
@@ -157,11 +157,6 @@ public static class MicrosoftSetup
         var id = $"microsoft_{msCount + 1}";
         var displayName = name ?? "Microsoft";
 
-        // Save token file
-        var tokensDir = Path.Combine(store.DataDirectory, "tokens");
-        Directory.CreateDirectory(tokensDir);
-        var tokenFilePath = Path.Combine(tokensDir, $"{id}.json");
-
         var tokenData = new MicrosoftTokenData
         {
             AccessToken = tokenResult.AccessToken,
@@ -169,10 +164,8 @@ public static class MicrosoftSetup
             ExpiresAt = DateTime.UtcNow.AddSeconds(tokenResult.ExpiresIn),
         };
 
-        var tokenDataJson = JsonSerializer.Serialize(tokenData, McpJson.Indented);
-        await File.WriteAllTextAsync(tokenFilePath, tokenDataJson);
-
-        Console.WriteLine("Token saved.");
+        await tokenStore.SaveAsync(id, tokenData);
+        Console.WriteLine("Tokens saved to tokens.json with current-user-only file permissions.");
 
         await store.AddAsync(new ChannelMetadata
         {
@@ -182,10 +175,10 @@ public static class MicrosoftSetup
             From = userEmail,
             Provider = "microsoft",
             ClientId = clientId,
-            ClientSecret = clientSecret,
         });
 
         ConsoleHelper.PrintSuccess($"Channel '{id}' added.");
+        Console.WriteLine($"Set {FieldCure.Mcp.Outbox.Credentials.OutboxSecretResolver.BuildEnvVarName(id, "CLIENT_SECRET")} before sending, or use an MCP client that supports elicitation.");
         ConsoleHelper.WaitForKey();
     }
 }

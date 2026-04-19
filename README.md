@@ -9,8 +9,8 @@ A multi-channel messaging [Model Context Protocol (MCP)](https://modelcontextpro
 
 - **Multiple messaging channels** — Slack, Telegram, Email (Gmail, Naver, Microsoft Graph API), KakaoTalk, Discord
 - **4 MCP tools** — `list_channels`, `add_channel`, `send_message`, `remove_channel`
-- **Credential storage** — secrets stored in `channels.json`, never exposed to the LLM
-- **CLI channel setup** — interactive console for credential entry, launched as a subprocess
+- **Cross-platform credential flow** — runtime secrets can come from env vars or MCP elicitation; OAuth tokens are stored separately for refresh lifecycle
+- **CLI channel setup** — interactive console for browser/OAuth flows where applicable
 - **SMTP presets** — Gmail, Naver with one-command setup
 - **Microsoft Graph API** — OAuth 2.0 browser flow for Outlook / M365 email with automatic token refresh
 - **KakaoTalk OAuth** — localhost callback flow with automatic token refresh
@@ -24,7 +24,7 @@ Existing MCP servers are channel-specific — one for Slack, another for Gmail, 
 Outbox takes a different approach:
 
 - **One tool, multiple channels** — `send_message` abstracts away channel differences. The LLM doesn't need to know Slack API vs SMTP vs Kakao REST.
-- **Credential isolation** — Secrets are entered through a separate console process and stored in `channels.json`. They never flow through MCP stdio, so they're never visible to the LLM.
+- **Credential isolation** — OAuth refresh tokens live in `tokens.json` with current-user-only file permissions; MCP tool flows can resolve secrets at runtime via env vars or elicitation.
 - **Single install** — `dotnet tool install -g` gives you 4 channels. No need to install and configure separate servers per channel.
 - **KakaoTalk support** — Currently the only MCP server with KakaoTalk messaging, essential for Korean users.
 
@@ -102,14 +102,15 @@ Add to `.vscode/mcp.json`:
 | Tool | Description | Confirmation |
 |------|-------------|:------------:|
 | `list_channels` | List all configured messaging channels | — |
-| `add_channel` | Add a new channel (opens setup console for credential entry) | — |
+| `add_channel` | Add a new channel (MCP elicitation for most channels, CLI OAuth flow for Microsoft/KakaoTalk) | — |
 | `send_message` | Send a message through a configured channel | Required |
 | `remove_channel` | Remove a channel and its stored credentials | Required |
 
 ## Channels
 
-All channel credentials are stored in `channels.json` alongside channel metadata.
-No secrets are exposed in conversation history or config files.
+OAuth tokens for Microsoft/KakaoTalk are stored in `tokens.json` so the server can refresh them across runs.
+For channels created through the newer MCP tool flow, static secrets are resolved at send time from environment variables or MCP elicitation.
+Some legacy CLI setup flows still persist static secrets in `channels.json` for compatibility.
 
 | Channel | Protocol | Setup |
 |---------|----------|-------|
@@ -121,6 +122,23 @@ No secrets are exposed in conversation history or config files.
 | KakaoTalk | Kakao REST API | [Guide](docs/setup-kakaotalk.md) |
 | Discord | Webhook API | [Guide](docs/setup-discord.md) |
 | Custom SMTP | User-defined | [Guide](docs/setup-custom-smtp.md) |
+
+### Static Secret Environment Variables
+
+When a channel requires a static secret at send time, Outbox looks for an environment variable named:
+
+```text
+OUTBOX_<CHANNEL_ID>_<FIELD>
+```
+
+Examples:
+
+- `OUTBOX_MICROSOFT_1_CLIENT_SECRET`
+- `OUTBOX_KAKAOTALK_1_API_KEY`
+- `OUTBOX_KAKAOTALK_1_CLIENT_SECRET`
+- `OUTBOX_SMTP_GMAIL_1_PASSWORD`
+
+If the variable is unset and the MCP client supports elicitation, Outbox prompts for it interactively and caches it for the current session.
 
 ## CLI Commands
 
@@ -143,9 +161,15 @@ fieldcure-mcp-outbox remove <id>          # Remove a channel
 | Data | Location |
 |------|----------|
 | Channel metadata | `%LOCALAPPDATA%\FieldCure\Mcp.Outbox\channels.json` |
-| Secrets | `channels.json` (alongside metadata) |
+| OAuth tokens | `%LOCALAPPDATA%\FieldCure\Mcp.Outbox\tokens.json` |
 | Telegram sessions | `%LOCALAPPDATA%\FieldCure\Mcp.Outbox\sessions\` |
-| OAuth tokens (Microsoft, KakaoTalk) | `%LOCALAPPDATA%\FieldCure\Mcp.Outbox\tokens\` |
+
+`tokens.json` is stored in plain JSON and protected by filesystem permissions:
+
+- Windows: ACL restricted to the current user
+- Linux/macOS: mode `0600`
+
+This protects against other local users on the same machine, but not against compromise of the same OS user account.
 
 ## Project Structure
 

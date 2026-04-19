@@ -18,6 +18,7 @@ public static class SendMessageTool
     public static async Task<string> SendMessage(
         McpServer server,
         ChannelStore store,
+        OAuthTokenStore tokenStore,
         OutboxSecretResolver resolver,
         IHttpClientFactory httpClientFactory,
         [Description("Channel ID to send through (e.g. 'slack_dev-alerts', 'smtp_gmail_1')")]
@@ -43,7 +44,7 @@ public static class SendMessageTool
         IChannel ch;
         try
         {
-            ch = ChannelFactory.Create(metadata, resolved.secrets, httpClientFactory);
+            ch = ChannelFactory.Create(metadata, resolved.secrets, httpClientFactory, tokenStore);
         }
         catch (Exception ex)
         {

@@ -1,6 +1,7 @@
 using System.Net.Http.Headers;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using FieldCure.Mcp.Outbox.Configuration;
 
 namespace FieldCure.Mcp.Outbox.Channels;
 
@@ -11,7 +12,7 @@ public class KakaoTalkChannel : IChannel
 {
     readonly string _apiKey;
     readonly string? _clientSecret;
-    readonly string _tokenFilePath;
+    readonly OAuthTokenStore _tokenStore;
     readonly HttpClient _httpClient;
 
     /// <inheritdoc />
@@ -28,16 +29,16 @@ public class KakaoTalkChannel : IChannel
     /// <param name="name">Display name.</param>
     /// <param name="apiKey">Kakao REST API key.</param>
     /// <param name="clientSecret">Kakao client secret (optional).</param>
-    /// <param name="tokenFilePath">File path for persisted OAuth tokens.</param>
+    /// <param name="tokenStore">Shared OAuth token store.</param>
     /// <param name="httpClient">HTTP client for API calls.</param>
     public KakaoTalkChannel(string id, string name, string apiKey, string? clientSecret,
-        string tokenFilePath, HttpClient httpClient)
+        OAuthTokenStore tokenStore, HttpClient httpClient)
     {
         Id = id;
         Name = name;
         _apiKey = apiKey;
         _clientSecret = clientSecret;
-        _tokenFilePath = tokenFilePath;
+        _tokenStore = tokenStore;
         _httpClient = httpClient;
     }
 
@@ -92,11 +93,7 @@ public class KakaoTalkChannel : IChannel
     /// </summary>
     async Task<string?> GetValidAccessTokenAsync(CancellationToken cancellationToken)
     {
-        if (!File.Exists(_tokenFilePath))
-            return null;
-
-        var json = await File.ReadAllTextAsync(_tokenFilePath, cancellationToken);
-        var tokenData = JsonSerializer.Deserialize<KakaoTokenData>(json);
+        var tokenData = await _tokenStore.GetAsync<KakaoTokenData>(Id, cancellationToken);
         if (tokenData == null)
             return null;
 
@@ -129,7 +126,7 @@ public class KakaoTalkChannel : IChannel
                 tokenData.RefreshTokenExpiresAt = DateTime.UtcNow.AddSeconds(refreshed.RefreshTokenExpiresIn);
         }
 
-        await SaveTokenDataAsync(tokenData, cancellationToken);
+        await _tokenStore.SaveAsync(Id, tokenData, cancellationToken);
         return tokenData.AccessToken;
     }
 
@@ -163,21 +160,6 @@ public class KakaoTalkChannel : IChannel
         }
 
         return JsonSerializer.Deserialize<KakaoTokenResponse>(json);
-    }
-
-    /// <summary>
-    /// Persists token data to disk atomically.
-    /// </summary>
-    async Task SaveTokenDataAsync(KakaoTokenData tokenData, CancellationToken cancellationToken)
-    {
-        var dir = Path.GetDirectoryName(_tokenFilePath);
-        if (dir != null)
-            Directory.CreateDirectory(dir);
-
-        var json = JsonSerializer.Serialize(tokenData, McpJson.Indented);
-        var tempPath = _tokenFilePath + ".tmp";
-        await File.WriteAllTextAsync(tempPath, json, cancellationToken);
-        File.Move(tempPath, _tokenFilePath, overwrite: true);
     }
 }
 

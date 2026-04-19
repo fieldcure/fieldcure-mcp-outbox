@@ -2,6 +2,7 @@ using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using FieldCure.Mcp.Outbox.Configuration;
 
 namespace FieldCure.Mcp.Outbox.Channels;
 
@@ -12,7 +13,7 @@ public class MicrosoftChannel : IChannel
 {
     readonly string _clientId;
     readonly string _clientSecret;
-    readonly string _tokenFilePath;
+    readonly OAuthTokenStore _tokenStore;
     readonly HttpClient _httpClient;
 
     /// <inheritdoc />
@@ -29,16 +30,16 @@ public class MicrosoftChannel : IChannel
     /// <param name="name">Display name.</param>
     /// <param name="clientId">Azure Entra ID application (client) ID.</param>
     /// <param name="clientSecret">Azure Entra ID client secret.</param>
-    /// <param name="tokenFilePath">File path for persisted OAuth tokens.</param>
+    /// <param name="tokenStore">Shared OAuth token store.</param>
     /// <param name="httpClient">HTTP client for API calls.</param>
     public MicrosoftChannel(string id, string name, string clientId, string clientSecret,
-        string tokenFilePath, HttpClient httpClient)
+        OAuthTokenStore tokenStore, HttpClient httpClient)
     {
         Id = id;
         Name = name;
         _clientId = clientId;
         _clientSecret = clientSecret;
-        _tokenFilePath = tokenFilePath;
+        _tokenStore = tokenStore;
         _httpClient = httpClient;
     }
 
@@ -97,11 +98,7 @@ public class MicrosoftChannel : IChannel
     /// </summary>
     async Task<string?> GetValidAccessTokenAsync(CancellationToken cancellationToken)
     {
-        if (!File.Exists(_tokenFilePath))
-            return null;
-
-        var json = await File.ReadAllTextAsync(_tokenFilePath, cancellationToken);
-        var tokenData = JsonSerializer.Deserialize<MicrosoftTokenData>(json);
+        var tokenData = await _tokenStore.GetAsync<MicrosoftTokenData>(Id, cancellationToken);
         if (tokenData == null)
             return null;
 
@@ -124,7 +121,7 @@ public class MicrosoftChannel : IChannel
         if (!string.IsNullOrEmpty(refreshed.RefreshToken))
             tokenData.RefreshToken = refreshed.RefreshToken;
 
-        await SaveTokenDataAsync(tokenData, cancellationToken);
+        await _tokenStore.SaveAsync(Id, tokenData, cancellationToken);
         return tokenData.AccessToken;
     }
 
@@ -154,21 +151,6 @@ public class MicrosoftChannel : IChannel
 
         var json = await response.Content.ReadAsStringAsync(cancellationToken);
         return JsonSerializer.Deserialize<MicrosoftTokenResponse>(json);
-    }
-
-    /// <summary>
-    /// Persists token data to disk atomically.
-    /// </summary>
-    async Task SaveTokenDataAsync(MicrosoftTokenData tokenData, CancellationToken cancellationToken)
-    {
-        var dir = Path.GetDirectoryName(_tokenFilePath);
-        if (dir != null)
-            Directory.CreateDirectory(dir);
-
-        var json = JsonSerializer.Serialize(tokenData, McpJson.Indented);
-        var tempPath = _tokenFilePath + ".tmp";
-        await File.WriteAllTextAsync(tempPath, json, cancellationToken);
-        File.Move(tempPath, _tokenFilePath, overwrite: true);
     }
 }
 

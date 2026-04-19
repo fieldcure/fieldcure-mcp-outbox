@@ -17,7 +17,7 @@ public static class KakaoTalkSetup
     /// <param name="store">The channel store for persistence.</param>
     /// <param name="credentials">The credential manager for storing API keys.</param>
     /// <param name="name">Optional display name override.</param>
-    public static async Task RunAsync(ChannelStore store, string? name)
+    public static async Task RunAsync(ChannelStore store, OAuthTokenStore tokenStore, string? name)
     {
         ConsoleHelper.PrintHeader("Add KakaoTalk Channel");
 
@@ -109,11 +109,6 @@ public static class KakaoTalkSetup
         var id = $"kakaotalk_{kakaoCount + 1}";
         var displayName = name ?? "KakaoTalk";
 
-        // Save token file
-        var tokensDir = Path.Combine(store.DataDirectory, "tokens");
-        Directory.CreateDirectory(tokensDir);
-        var tokenFilePath = Path.Combine(tokensDir, $"{id}.json");
-
         var tokenData = new KakaoTokenData
         {
             AccessToken = tokenResult.AccessToken,
@@ -124,21 +119,20 @@ public static class KakaoTalkSetup
                 : null,
         };
 
-        var tokenDataJson = JsonSerializer.Serialize(tokenData, McpJson.Indented);
-        await File.WriteAllTextAsync(tokenFilePath, tokenDataJson);
-
-        Console.WriteLine("Token received and saved.");
+        await tokenStore.SaveAsync(id, tokenData);
+        Console.WriteLine("Tokens saved to tokens.json with current-user-only file permissions.");
 
         await store.AddAsync(new ChannelMetadata
         {
             Id = id,
             Type = "kakaotalk",
             Name = displayName,
-            ApiKey = apiKey,
-            ClientSecret = string.IsNullOrWhiteSpace(clientSecret) ? null : clientSecret,
         });
 
         ConsoleHelper.PrintSuccess($"Channel '{id}' added.");
+        Console.WriteLine($"Set {FieldCure.Mcp.Outbox.Credentials.OutboxSecretResolver.BuildEnvVarName(id, "API_KEY")} before sending.");
+        if (!string.IsNullOrWhiteSpace(clientSecret))
+            Console.WriteLine($"If your Kakao app requires a client secret, also set {FieldCure.Mcp.Outbox.Credentials.OutboxSecretResolver.BuildEnvVarName(id, "CLIENT_SECRET")}.");
         ConsoleHelper.WaitForKey();
     }
 }

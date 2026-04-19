@@ -9,6 +9,7 @@ public class ChannelFactoryTests
     [TestMethod]
     public void Create_Slack_ReturnsSlackChannel()
     {
+        var tokenStore = new OAuthTokenStore(Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N")));
         var metadata = new ChannelMetadata
         {
             Id = "test_slack",
@@ -18,7 +19,7 @@ public class ChannelFactoryTests
             DefaultChannel = "general",
         };
 
-        var channel = ChannelFactory.Create(metadata, null, new TestHttpClientFactory());
+        var channel = ChannelFactory.Create(metadata, null, new TestHttpClientFactory(), tokenStore);
 
         Assert.IsInstanceOfType(channel, typeof(SlackChannel));
         Assert.AreEqual("test_slack", channel.Id);
@@ -27,6 +28,7 @@ public class ChannelFactoryTests
     [TestMethod]
     public void Create_Microsoft_ReturnsMicrosoftChannel()
     {
+        var tokenStore = new OAuthTokenStore(Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N")));
         var metadata = new ChannelMetadata
         {
             Id = "test_microsoft",
@@ -37,7 +39,7 @@ public class ChannelFactoryTests
             ClientSecret = "test-client-secret",
         };
 
-        var channel = ChannelFactory.Create(metadata, null, new TestHttpClientFactory());
+        var channel = ChannelFactory.Create(metadata, null, new TestHttpClientFactory(), tokenStore);
 
         Assert.IsInstanceOfType(channel, typeof(MicrosoftChannel));
         Assert.AreEqual("test_microsoft", channel.Id);
@@ -46,6 +48,7 @@ public class ChannelFactoryTests
     [TestMethod]
     public void Create_Discord_ReturnsDiscordChannel()
     {
+        var tokenStore = new OAuthTokenStore(Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N")));
         var metadata = new ChannelMetadata
         {
             Id = "test_discord",
@@ -54,7 +57,7 @@ public class ChannelFactoryTests
             WebhookUrl = "https://discord.com/api/webhooks/123/abc",
         };
 
-        var channel = ChannelFactory.Create(metadata, null, new TestHttpClientFactory());
+        var channel = ChannelFactory.Create(metadata, null, new TestHttpClientFactory(), tokenStore);
 
         Assert.IsInstanceOfType(channel, typeof(DiscordChannel));
         Assert.AreEqual("test_discord", channel.Id);
@@ -63,6 +66,7 @@ public class ChannelFactoryTests
     [TestMethod]
     public void Create_UnknownType_ThrowsArgumentException()
     {
+        var tokenStore = new OAuthTokenStore(Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N")));
         var metadata = new ChannelMetadata
         {
             Id = "test_unknown",
@@ -71,7 +75,7 @@ public class ChannelFactoryTests
         };
 
         Assert.ThrowsExactly<ArgumentException>(() =>
-            ChannelFactory.Create(metadata, null, new TestHttpClientFactory()));
+            ChannelFactory.Create(metadata, null, new TestHttpClientFactory(), tokenStore));
     }
 
     class TestHttpClientFactory : IHttpClientFactory
