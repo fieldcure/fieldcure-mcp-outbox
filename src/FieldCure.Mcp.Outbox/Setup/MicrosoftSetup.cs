@@ -1,9 +1,8 @@
-using System.Diagnostics;
-using System.Net;
 using System.Net.Http.Headers;
 using System.Text.Json;
 using FieldCure.Mcp.Outbox.Channels;
 using FieldCure.Mcp.Outbox.Configuration;
+using FieldCure.Mcp.Outbox.OAuth;
 
 namespace FieldCure.Mcp.Outbox.Setup;
 
@@ -38,56 +37,15 @@ public static class MicrosoftSetup
             return;
         }
 
-        // Use fixed port for Microsoft redirect URI (must match Azure app registration)
-        const int port = 9876;
-        var redirectUri = $"http://localhost:{port}/callback";
-        var listenerPrefix = $"{redirectUri}/";
-
-        // Start local HTTP listener
-        using var httpListener = new HttpListener();
-        httpListener.Prefixes.Add(listenerPrefix);
-        httpListener.Start();
-
-        // Open browser for authorization
+        var oauthFlow = new BrowserOAuthFlow();
+        var redirectUri = oauthFlow.RedirectUri;
         var scope = Uri.EscapeDataString("Mail.Send User.Read offline_access");
         var authUrl = $"https://login.microsoftonline.com/common/oauth2/v2.0/authorize?client_id={clientId}&response_type=code&redirect_uri={Uri.EscapeDataString(redirectUri)}&scope={scope}&response_mode=query";
 
-        Console.WriteLine();
-        Console.WriteLine("Opening browser for Microsoft login...");
-        Process.Start(new ProcessStartInfo { FileName = authUrl, UseShellExecute = true });
-
-        Console.Write("Waiting for authorization... ");
-
-        // Wait for callback
-        var context = await httpListener.GetContextAsync();
-        var code = context.Request.QueryString["code"];
-        var error = context.Request.QueryString["error"];
-
-        // Send response to browser
-        string responseHtmlText;
-        if (!string.IsNullOrEmpty(error))
+        var callback = await oauthFlow.RunWithConsoleAsync(authUrl, "Microsoft");
+        if (!callback.IsSuccess || string.IsNullOrWhiteSpace(callback.Code))
         {
-            var errorDesc = context.Request.QueryString["error_description"] ?? error;
-            responseHtmlText = $"<html><body><h2>Authorization failed</h2><p>{WebUtility.HtmlEncode(errorDesc)}</p></body></html>";
-        }
-        else
-        {
-            responseHtmlText = "<html><body><h2>Authorization successful!</h2><p>You can close this window.</p></body></html>";
-        }
-
-        var responseHtml = System.Text.Encoding.UTF8.GetBytes(responseHtmlText);
-        context.Response.ContentType = "text/html";
-        context.Response.ContentLength64 = responseHtml.Length;
-        await context.Response.OutputStream.WriteAsync(responseHtml);
-        context.Response.Close();
-
-        httpListener.Stop();
-
-        if (string.IsNullOrEmpty(code))
-        {
-            var errorMsg = error != null
-                ? $"Authorization failed: {context.Request.QueryString["error_description"] ?? error}"
-                : "Authorization failed: no code received.";
+            var errorMsg = callback.ErrorDescription ?? "Authorization failed: no code received.";
             ConsoleHelper.PrintError(errorMsg);
             ConsoleHelper.WaitForKey();
             return;
@@ -101,7 +59,7 @@ public static class MicrosoftSetup
         {
             ["client_id"] = clientId,
             ["scope"] = "Mail.Send User.Read offline_access",
-            ["code"] = code,
+            ["code"] = callback.Code,
             ["redirect_uri"] = redirectUri,
             ["grant_type"] = "authorization_code",
             ["client_secret"] = clientSecret,

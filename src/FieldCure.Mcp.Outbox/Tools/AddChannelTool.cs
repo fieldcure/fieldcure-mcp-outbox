@@ -1,7 +1,10 @@
 using System.ComponentModel;
+using System.Net.Http.Headers;
 using System.Text.Json;
+using FieldCure.Mcp.Outbox.Channels;
 using FieldCure.Mcp.Outbox.Configuration;
 using FieldCure.Mcp.Outbox.Credentials;
+using FieldCure.Mcp.Outbox.OAuth;
 using ModelContextProtocol.Protocol;
 using ModelContextProtocol.Server;
 
@@ -17,6 +20,7 @@ public static class AddChannelTool
     public static async Task<string> AddChannel(
         McpServer server,
         ChannelStore store,
+        OAuthTokenStore tokenStore,
         OutboxSecretResolver resolver,
         [Description("Channel type: slack, telegram, gmail, naver, smtp, kakaotalk, microsoft, discord")]
         string type,
@@ -33,11 +37,8 @@ public static class AddChannelTool
                 "discord" => await AddDiscordAsync(server, store, resolver, name, cancellationToken),
                 "gmail" or "naver" or "smtp" => await AddSmtpAsync(server, store, resolver, normalizedType, name, cancellationToken),
                 "telegram" => await AddTelegramAsync(server, store, resolver, name, cancellationToken),
-                "microsoft" or "kakaotalk" => JsonSerializer.Serialize(new
-                {
-                    status = "error",
-                    error = $"Interactive OAuth setup for '{normalizedType}' still uses the CLI compatibility path. Run `fieldcure-mcp-outbox add {normalizedType}` manually for now."
-                }, McpJson.Tool),
+                "microsoft" => await AddMicrosoftAsync(server, store, tokenStore, resolver, name, cancellationToken),
+                "kakaotalk" => await AddKakaoTalkAsync(server, store, tokenStore, resolver, name, cancellationToken),
                 _ => JsonSerializer.Serialize(new { status = "error", error = $"Unsupported channel type: {type}" }, McpJson.Tool),
             };
         }
@@ -241,6 +242,236 @@ public static class AddChannelTool
         });
 
         return JsonSerializer.Serialize(new { status = "ok", channel_id = id }, McpJson.Tool);
+    }
+
+    static async Task<string> AddKakaoTalkAsync(
+        McpServer server,
+        ChannelStore store,
+        OAuthTokenStore tokenStore,
+        OutboxSecretResolver resolver,
+        string? name,
+        CancellationToken ct)
+    {
+        if (!BrowserOAuthFlow.IsSupportedOnCurrentHost())
+        {
+            return JsonSerializer.Serialize(new
+            {
+                status = "error",
+                error = $"{BrowserOAuthFlow.GetUnsupportedReason()} KakaoTalk setup currently requires a local desktop host.",
+            }, McpJson.Tool);
+        }
+
+        var values = await PromptAsync(server, "Enter the Kakao REST API key and optional client secret.",
+        [
+            Field("api_key", "REST API Key", "Kakao REST API key"),
+            Field("client_secret", "Client Secret", "Optional Kakao client secret", required: false),
+        ], ct);
+
+        if (values is null)
+            return JsonSerializer.Serialize(new { status = "error", error = "KakaoTalk setup requires a client that supports MCP Elicitation." }, McpJson.Tool);
+
+        var oauthFlow = new BrowserOAuthFlow();
+        var redirectUri = oauthFlow.RedirectUri;
+        var apiKey = values["api_key"];
+        var clientSecret = values.GetValueOrDefault("client_secret");
+        var authUrl = $"https://kauth.kakao.com/oauth/authorize?client_id={apiKey}&redirect_uri={Uri.EscapeDataString(redirectUri)}&response_type=code&scope=talk_message";
+        var callback = await oauthFlow.RunWithMcpAsync(server, authUrl, "KakaoTalk", ct);
+
+        if (!callback.IsSuccess || string.IsNullOrWhiteSpace(callback.Code))
+        {
+            return JsonSerializer.Serialize(new
+            {
+                status = "error",
+                error = callback.ErrorDescription ?? "KakaoTalk authorization did not complete.",
+            }, McpJson.Tool);
+        }
+
+        using var httpClient = new HttpClient();
+        var tokenParams = new Dictionary<string, string>
+        {
+            ["grant_type"] = "authorization_code",
+            ["client_id"] = apiKey,
+            ["redirect_uri"] = redirectUri,
+            ["code"] = callback.Code,
+        };
+
+        if (!string.IsNullOrWhiteSpace(clientSecret))
+            tokenParams["client_secret"] = clientSecret;
+
+        var tokenResponse = await httpClient.PostAsync(
+            "https://kauth.kakao.com/oauth/token",
+            new FormUrlEncodedContent(tokenParams),
+            ct);
+        var tokenJson = await tokenResponse.Content.ReadAsStringAsync(ct);
+
+        if (!tokenResponse.IsSuccessStatusCode)
+        {
+            return JsonSerializer.Serialize(new
+            {
+                status = "error",
+                error = $"KakaoTalk token exchange failed: {tokenJson}",
+            }, McpJson.Tool);
+        }
+
+        var tokenResult = JsonSerializer.Deserialize<KakaoTokenResponse>(tokenJson, McpJson.Store);
+        if (tokenResult is null)
+            return JsonSerializer.Serialize(new { status = "error", error = "KakaoTalk token exchange returned an unreadable response." }, McpJson.Tool);
+
+        var existingChannels = await store.LoadAsync();
+        var id = $"kakaotalk_{existingChannels.Count(c => c.Type == "kakaotalk") + 1}";
+        var displayName = name ?? "KakaoTalk";
+
+        await tokenStore.SaveAsync(id, new KakaoTokenData
+        {
+            AccessToken = tokenResult.AccessToken,
+            RefreshToken = tokenResult.RefreshToken ?? string.Empty,
+            ExpiresAt = DateTime.UtcNow.AddSeconds(tokenResult.ExpiresIn),
+            RefreshTokenExpiresAt = tokenResult.RefreshTokenExpiresIn > 0
+                ? DateTime.UtcNow.AddSeconds(tokenResult.RefreshTokenExpiresIn)
+                : null,
+        });
+
+        resolver.Remember(OutboxSecretResolver.BuildEnvVarName(id, "API_KEY"), apiKey);
+        if (!string.IsNullOrWhiteSpace(clientSecret))
+            resolver.Remember(OutboxSecretResolver.BuildEnvVarName(id, "CLIENT_SECRET"), clientSecret);
+
+        await store.AddAsync(new ChannelMetadata
+        {
+            Id = id,
+            Type = "kakaotalk",
+            Name = displayName,
+        });
+
+        return JsonSerializer.Serialize(new
+        {
+            status = "ok",
+            channel_id = id,
+            oauth = "browser",
+        }, McpJson.Tool);
+    }
+
+    static async Task<string> AddMicrosoftAsync(
+        McpServer server,
+        ChannelStore store,
+        OAuthTokenStore tokenStore,
+        OutboxSecretResolver resolver,
+        string? name,
+        CancellationToken ct)
+    {
+        if (!BrowserOAuthFlow.IsSupportedOnCurrentHost())
+        {
+            return JsonSerializer.Serialize(new
+            {
+                status = "error",
+                error = $"{BrowserOAuthFlow.GetUnsupportedReason()} Microsoft setup currently requires a local desktop host.",
+            }, McpJson.Tool);
+        }
+
+        var values = await PromptAsync(server, "Enter the Microsoft client ID and client secret.",
+        [
+            Field("client_id", "Client ID", "Microsoft application (client) ID"),
+            Field("client_secret", "Client Secret", "Microsoft client secret"),
+        ], ct);
+
+        if (values is null)
+            return JsonSerializer.Serialize(new { status = "error", error = "Microsoft setup requires a client that supports MCP Elicitation." }, McpJson.Tool);
+
+        var oauthFlow = new BrowserOAuthFlow();
+        var redirectUri = oauthFlow.RedirectUri;
+        var clientId = values["client_id"];
+        var clientSecret = values["client_secret"];
+        var scope = Uri.EscapeDataString("Mail.Send User.Read offline_access");
+        var authUrl = $"https://login.microsoftonline.com/common/oauth2/v2.0/authorize?client_id={clientId}&response_type=code&redirect_uri={Uri.EscapeDataString(redirectUri)}&scope={scope}&response_mode=query";
+        var callback = await oauthFlow.RunWithMcpAsync(server, authUrl, "Microsoft", ct);
+
+        if (!callback.IsSuccess || string.IsNullOrWhiteSpace(callback.Code))
+        {
+            return JsonSerializer.Serialize(new
+            {
+                status = "error",
+                error = callback.ErrorDescription ?? "Microsoft authorization did not complete.",
+            }, McpJson.Tool);
+        }
+
+        using var httpClient = new HttpClient();
+        var tokenParams = new Dictionary<string, string>
+        {
+            ["client_id"] = clientId,
+            ["scope"] = "Mail.Send User.Read offline_access",
+            ["code"] = callback.Code,
+            ["redirect_uri"] = redirectUri,
+            ["grant_type"] = "authorization_code",
+            ["client_secret"] = clientSecret,
+        };
+
+        var tokenResponse = await httpClient.PostAsync(
+            "https://login.microsoftonline.com/common/oauth2/v2.0/token",
+            new FormUrlEncodedContent(tokenParams),
+            ct);
+        var tokenJson = await tokenResponse.Content.ReadAsStringAsync(ct);
+
+        if (!tokenResponse.IsSuccessStatusCode)
+        {
+            return JsonSerializer.Serialize(new
+            {
+                status = "error",
+                error = $"Microsoft token exchange failed: {tokenJson}",
+            }, McpJson.Tool);
+        }
+
+        var tokenResult = JsonSerializer.Deserialize<MicrosoftTokenResponse>(tokenJson, McpJson.Store);
+        if (tokenResult is null)
+            return JsonSerializer.Serialize(new { status = "error", error = "Microsoft token exchange returned an unreadable response." }, McpJson.Tool);
+
+        string? userEmail = null;
+        try
+        {
+            using var meRequest = new HttpRequestMessage(HttpMethod.Get, "https://graph.microsoft.com/v1.0/me");
+            meRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", tokenResult.AccessToken);
+            var meResponse = await httpClient.SendAsync(meRequest, ct);
+            if (meResponse.IsSuccessStatusCode)
+            {
+                var meJson = await meResponse.Content.ReadAsStringAsync(ct);
+                var meData = JsonSerializer.Deserialize<JsonElement>(meJson);
+                if (meData.TryGetProperty("mail", out var mailProp) && mailProp.ValueKind == JsonValueKind.String)
+                    userEmail = mailProp.GetString();
+                if (string.IsNullOrWhiteSpace(userEmail) && meData.TryGetProperty("userPrincipalName", out var upnProp) && upnProp.ValueKind == JsonValueKind.String)
+                    userEmail = upnProp.GetString();
+            }
+        }
+        catch
+        {
+        }
+
+        var existingChannels = await store.LoadAsync();
+        var id = $"microsoft_{existingChannels.Count(c => c.Type == "microsoft") + 1}";
+        var displayName = name ?? "Microsoft";
+
+        await tokenStore.SaveAsync(id, new MicrosoftTokenData
+        {
+            AccessToken = tokenResult.AccessToken,
+            RefreshToken = tokenResult.RefreshToken ?? string.Empty,
+            ExpiresAt = DateTime.UtcNow.AddSeconds(tokenResult.ExpiresIn),
+        });
+
+        resolver.Remember(OutboxSecretResolver.BuildEnvVarName(id, "CLIENT_SECRET"), clientSecret);
+
+        await store.AddAsync(new ChannelMetadata
+        {
+            Id = id,
+            Type = "microsoft",
+            Name = displayName,
+            From = userEmail,
+            Provider = "microsoft",
+            ClientId = clientId,
+        });
+
+        return JsonSerializer.Serialize(new
+        {
+            status = "ok",
+            channel_id = id,
+            oauth = "browser",
+        }, McpJson.Tool);
     }
 
     static SecretFieldRequest Field(string name, string title, string description, bool required = true) =>

@@ -1,8 +1,7 @@
-using System.Diagnostics;
-using System.Net;
 using System.Text.Json;
 using FieldCure.Mcp.Outbox.Channels;
 using FieldCure.Mcp.Outbox.Configuration;
+using FieldCure.Mcp.Outbox.OAuth;
 
 namespace FieldCure.Mcp.Outbox.Setup;
 
@@ -31,44 +30,21 @@ public static class KakaoTalkSetup
 
         var clientSecret = ConsoleHelper.ReadMasked("Client Secret (press Enter to skip if disabled)");
 
-        // Use fixed port for Kakao redirect URI (must match Kakao developer console)
-        // OAuth redirect URI: no trailing slash (matches Kakao console registration)
-        // HttpListener prefix: requires trailing slash
-        const int port = 9876;
-        var redirectUri = $"http://localhost:{port}/callback";
-        var listenerPrefix = $"{redirectUri}/";
+        var oauthFlow = new BrowserOAuthFlow();
+        var redirectUri = oauthFlow.RedirectUri;
 
-        // Start local HTTP listener
-        using var httpListener = new HttpListener();
-        httpListener.Prefixes.Add(listenerPrefix);
-        httpListener.Start();
+        Console.Error.WriteLine(
+            $"[debug] client_id: {(apiKey.Length >= 6 ? apiKey[..6] : apiKey)}… (len={apiKey.Length})");
+        Console.Error.WriteLine(
+            $"[debug] client_secret: {(string.IsNullOrWhiteSpace(clientSecret) ? "(skipped)" : $"{clientSecret.Length} chars")}");
+        Console.Error.WriteLine($"[debug] redirect_uri: {redirectUri}");
 
-        // Open browser for authorization
         var authUrl = $"https://kauth.kakao.com/oauth/authorize?client_id={apiKey}&redirect_uri={Uri.EscapeDataString(redirectUri)}&response_type=code&scope=talk_message";
 
-        Console.WriteLine();
-        Console.WriteLine("Opening browser for Kakao login...");
-        Process.Start(new ProcessStartInfo { FileName = authUrl, UseShellExecute = true });
-
-        Console.Write("Waiting for authorization... ");
-
-        // Wait for callback
-        var context = await httpListener.GetContextAsync();
-        var code = context.Request.QueryString["code"];
-
-        // Send response to browser
-        var responseHtml = System.Text.Encoding.UTF8.GetBytes(
-            "<html><body><h2>Authorization successful!</h2><p>You can close this window.</p></body></html>");
-        context.Response.ContentType = "text/html";
-        context.Response.ContentLength64 = responseHtml.Length;
-        await context.Response.OutputStream.WriteAsync(responseHtml);
-        context.Response.Close();
-
-        httpListener.Stop();
-
-        if (string.IsNullOrEmpty(code))
+        var callback = await oauthFlow.RunWithConsoleAsync(authUrl, "KakaoTalk");
+        if (!callback.IsSuccess || string.IsNullOrWhiteSpace(callback.Code))
         {
-            ConsoleHelper.PrintError("Authorization failed: no code received.");
+            ConsoleHelper.PrintError(callback.ErrorDescription ?? "Authorization failed: no code received.");
             ConsoleHelper.WaitForKey();
             return;
         }
@@ -82,7 +58,7 @@ public static class KakaoTalkSetup
             ["grant_type"] = "authorization_code",
             ["client_id"] = apiKey,
             ["redirect_uri"] = redirectUri,
-            ["code"] = code,
+            ["code"] = callback.Code,
         };
 
         if (!string.IsNullOrWhiteSpace(clientSecret))
@@ -96,6 +72,8 @@ public static class KakaoTalkSetup
 
         if (!tokenResponse.IsSuccessStatusCode)
         {
+            Console.Error.WriteLine(
+                $"[debug] token endpoint: POST https://kauth.kakao.com/oauth/token → {(int)tokenResponse.StatusCode} {tokenResponse.StatusCode}");
             ConsoleHelper.PrintError($"Token exchange failed: {tokenJson}");
             ConsoleHelper.WaitForKey();
             return;
