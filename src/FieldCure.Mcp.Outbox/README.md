@@ -1,4 +1,4 @@
-# FieldCure.Mcp.Outbox
+﻿# FieldCure.Mcp.Outbox
 
 **Multi-channel messaging MCP server** — send messages through Slack, Telegram, Email (Gmail, Naver, Microsoft Graph API), KakaoTalk, and Discord with a single `send_message` tool. One install, one interface, multiple channels.
 
@@ -57,7 +57,16 @@ fieldcure-mcp-outbox
 
 ## Credential Storage
 
-Credentials are stored in `channels.json` alongside channel metadata. Channel setup runs in a separate console process — credentials never pass through MCP stdio.
+Credentials are resolved in this order:
+
+1. **In-memory cache** (from prior elicitation or env var pickup in the current session)
+2. **Environment variable** `OUTBOX_{CHANNEL_ID}_{FIELD}` (e.g. `OUTBOX_SLACK_GENERAL_BOT_TOKEN`)
+3. **`channels.json`** (plaintext, written by the CLI setup flow)
+4. **MCP Elicitation** (when the client supports it)
+
+OAuth dynamic tokens (Microsoft, KakaoTalk) are persisted separately in `tokens.json` with current-user-only file permissions (Windows ACL / Unix `0600`). Channel setup never passes credentials through MCP stdio.
+
+Plaintext storage in `channels.json` is a deliberate local-trust choice — same same-user security boundary as `~/.docker/config.json` and `~/.config/gh/hosts.yml`. For shared hosts, CI, or headless deployments, set the env vars directly and leave the secret fields of `channels.json` empty. See [ADR-001](https://github.com/fieldcure/fieldcure-assiststudio/blob/main/docs/ADR-001-MCP-Credential-Management.md) Principle 2.
 
 ## Requirements
 

@@ -1,10 +1,34 @@
 # Release Notes
 
+## v2.1.0 (2026-04-20)
+
+### Added
+
+- **OAuth channels complete inside `add_channel`** — KakaoTalk and Microsoft no longer require the `fieldcure-mcp-outbox add kakaotalk|microsoft` CLI route. The MCP tool elicits the static app credentials, opens the user's default browser on the MCP server host, listens on `http://localhost:9876/callback`, and races the listener against a second `BooleanSchema` elicitation ("Sign-in complete?") so the user can confirm or cancel from the MCP client UI. The elicit message surfaces the authorization URL so the user can open it manually if the automatic launch did not work. The CLI `add kakaotalk|microsoft` commands stay for diagnostics but are no longer the primary path.
+- **`IElicitGate` abstraction** (`Interaction/IElicitGate.cs`, `McpServerElicitGate.cs`) — wraps the subset of `McpServer` that Outbox credential and OAuth flows need, so `OutboxSecretResolver`, the add-channel tool, and `BrowserOAuthFlow` are all unit-testable without constructing a real server.
+- **`OutboxSecretResolverTests`** — three baseline tests lock in the cache → env var → legacy metadata → elicitation lookup order using a fake gate.
+- **`BrowserOAuthFlow.IsSupportedOnCurrentHost()` WSL support** — the pre-check now treats WSL as supported when `WSL_DISTRO_NAME` is set, because the `wslu` package lets `xdg-open` delegate to the Windows host browser even when `DISPLAY` is unset.
+
+### Changed
+
+- **`OutboxSecretResolver.ResolveFieldsAsync`** now takes `IElicitGate?` instead of `McpServer`. The lookup order and elicitation schema are unchanged.
+- **`SendMessageTool`** builds a `McpServerElicitGate` around the injected server before resolving per-channel secrets, mirroring the add-channel path.
+- **`BrowserOAuthFlow.RunWithGateAsync`** replaces the previous direct-`McpServer` signature. `RunWithConsoleAsync` keeps the CLI path intact.
+- **Browser confirmation prompt wording** — the second elicitation no longer claims the browser "should already be open". `Process.Start(UseShellExecute=true)` returns success as soon as the shell dispatches the URL and cannot guarantee a window appeared, so the prompt always surfaces the authorization URL and phrases the launch status as "a browser launch request was dispatched".
+- **Callback completion page** — `WaitForCallbackAsync` writes the "Authorization successful" HTML back to the browser with `CancellationToken.None`, so a late grace-window timeout cannot truncate the page the user sees.
+- **Telegram setup** — added an explanatory comment on the `WTelegram.Client` callback's `GetAwaiter().GetResult()` bridge: the callback is synchronous by design and runs off the stdio loop, so the blocking wait is safe.
+
+### Deployment note
+
+Same host requirements as v2.0 for OAuth channels: the MCP server host needs a local default browser and must be able to accept the `localhost:9876` callback. See [ADR-001 Phase 3c](https://github.com/fieldcure/fieldcure-assiststudio/blob/main/docs/ADR-001-MCP-Credential-Management.md) — headless / remote / container hosts still need `v2.2` device-code flow (planned).
+
+---
+
 ## v2.0.0 (2026-04-17)
 
 ### Breaking
 
-- **Remove Windows Credential Manager dependency** — credentials are now stored in `channels.json` alongside channel metadata instead of Windows Credential Manager (advapi32.dll). Existing channels must be re-added via `add` command. This makes the package genuinely cross-platform.
+- **Remove Windows Credential Manager dependency** — credentials are now stored in `channels.json` alongside channel metadata instead of Windows Credential Manager (advapi32.dll). Existing channels must be re-added via `add` command. This makes the package genuinely cross-platform. Plaintext storage in `channels.json` is a deliberate local-trust choice documented in [ADR-001](https://github.com/fieldcure/fieldcure-assiststudio/blob/main/docs/ADR-001-MCP-Credential-Management.md) Principle 2 (local-trust exception) — it matches the same-user security boundary already used for `tokens.json`, and the same convention found in `~/.docker/config.json` and `~/.config/gh/hosts.yml`. Production / shared / headless deployments should set `OUTBOX_{id}_{field}` env vars instead and leave the secret fields of `channels.json` empty; `OutboxSecretResolver` reads `channels.json` as the last fallback only (cache → env var → `channels.json` → Elicitation).
 - **`ChannelFactory.Create()` signature change** — `CredentialManager` parameter removed; credentials read from `ChannelMetadata` directly.
 
 ### Changed

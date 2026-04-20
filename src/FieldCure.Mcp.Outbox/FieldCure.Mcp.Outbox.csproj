@@ -8,7 +8,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
 
-    <Version>2.0.0</Version>
+    <Version>2.1.0</Version>
     <PackageId>FieldCure.Mcp.Outbox</PackageId>
 
     <Authors>Jong Hyun Kim</Authors>
@@ -22,7 +22,7 @@
     <PackageTags>mcp;mcp-server;ai;dotnet;email;smtp;slack;telegram;kakaotalk;discord;notification</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageIcon>Logo.png</PackageIcon>
-    <PackageReleaseNotes>v2.0.0: Remove Windows Credential Manager dependency. Credentials stored in channels.json. Cross-platform support. Breaking: existing channels must be re-added.</PackageReleaseNotes>
+    <PackageReleaseNotes>v2.1.0: KakaoTalk and Microsoft OAuth now complete entirely inside the add_channel MCP tool — browser opens on the MCP server host, localhost callback is caught by the server, and a BooleanSchema follow-up elicitation lets the user confirm or cancel. CLI remains as a diagnostic fallback. New IElicitGate abstraction + OutboxSecretResolver unit tests. Browser flow now recognizes WSL (WSL_DISTRO_NAME) and never claims the browser "should already be open" — it always surfaces the authorization URL so the user can open it manually if needed.</PackageReleaseNotes>
 
     <PackageType>McpServer</PackageType>
     <PackAsTool>true</PackAsTool>

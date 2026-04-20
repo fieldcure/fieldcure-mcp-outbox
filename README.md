@@ -102,15 +102,15 @@ Add to `.vscode/mcp.json`:
 | Tool | Description | Confirmation |
 |------|-------------|:------------:|
 | `list_channels` | List all configured messaging channels | — |
-| `add_channel` | Add a new channel (MCP elicitation for most channels, CLI OAuth flow for Microsoft/KakaoTalk) | — |
+| `add_channel` | Add a new channel (MCP elicitation for all channel types; Microsoft/KakaoTalk require a local browser on the MCP host) | — |
 | `send_message` | Send a message through a configured channel | Required |
 | `remove_channel` | Remove a channel and its stored credentials | Required |
 
 ## Channels
 
-OAuth tokens for Microsoft/KakaoTalk are stored in `tokens.json` so the server can refresh them across runs.
-For channels created through the newer MCP tool flow, static secrets are resolved at send time from environment variables or MCP elicitation.
-Some legacy CLI setup flows still persist static secrets in `channels.json` for compatibility.
+OAuth tokens for Microsoft/KakaoTalk are stored in `tokens.json` so the server can refresh them across runs (current-user-only file permissions — Windows ACL / Unix `0600`).
+
+Static secrets (Slack bot tokens, Discord webhook URLs, SMTP passwords, etc.) resolve at send time in this order: in-memory cache → env var `OUTBOX_{CHANNEL_ID}_{FIELD}` → plaintext in `channels.json` → MCP elicitation. The CLI `add_channel` flow writes directly into `channels.json` for a zero-configuration local experience. This is an intentional local-trust choice with the same same-user boundary as `tokens.json`, documented in [ADR-001](https://github.com/fieldcure/fieldcure-assiststudio/blob/main/docs/ADR-001-MCP-Credential-Management.md) Principle 2. For shared hosts, CI, or headless deployments, set the env vars explicitly and leave `channels.json` secret fields empty.
 
 | Channel | Protocol | Setup |
 |---------|----------|-------|
@@ -187,11 +187,18 @@ src/FieldCure.Mcp.Outbox/
 │   └── DiscordChannel.cs       # Discord Webhook API
 ├── Tools/
 │   ├── ListChannelsTool.cs     # list_channels
-│   ├── AddChannelTool.cs       # add_channel
+│   ├── AddChannelTool.cs       # add_channel (elicitation + browser OAuth for Kakao/Microsoft)
 │   ├── RemoveChannelTool.cs    # remove_channel
 │   └── SendMessageTool.cs      # send_message
+├── Interaction/
+│   ├── IElicitGate.cs          # Minimal MCP elicitation surface for tests
+│   └── McpServerElicitGate.cs  # Production adapter around McpServer
+├── OAuth/
+│   └── BrowserOAuthFlow.cs     # Localhost callback + Process.Start + elicit race (MCP and CLI entry points)
+├── Credentials/
+│   └── OutboxSecretResolver.cs # cache → env → channels.json → elicitation
 ├── Setup/
-│   ├── SetupRunner.cs          # CLI router
+│   ├── SetupRunner.cs          # CLI router (diagnostic path)
 │   ├── ConsoleHelper.cs        # Masked input, prompts
 │   ├── SlackSetup.cs
 │   ├── TelegramSetup.cs
@@ -200,8 +207,8 @@ src/FieldCure.Mcp.Outbox/
 │   ├── KakaoTalkSetup.cs
 │   └── DiscordSetup.cs
 └── Configuration/
-    ├── ChannelStore.cs         # channels.json persistence
-    ├── ChannelStore.cs         # Channel metadata + credential persistence
+    ├── ChannelStore.cs         # channels.json persistence (metadata + static-secret fallback)
+    ├── OAuthTokenStore.cs      # tokens.json persistence (OAuth access/refresh, user-only file perms)
     └── SmtpPresets.cs          # SMTP preset definitions
 ```
 
