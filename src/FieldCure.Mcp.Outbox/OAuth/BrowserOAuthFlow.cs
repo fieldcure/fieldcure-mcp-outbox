@@ -1,8 +1,8 @@
 using System.Diagnostics;
 using System.Net;
 using System.Text;
+using FieldCure.Mcp.Outbox.Interaction;
 using ModelContextProtocol.Protocol;
-using ModelContextProtocol.Server;
 
 namespace FieldCure.Mcp.Outbox.OAuth;
 
@@ -45,8 +45,12 @@ public sealed class BrowserOAuthFlow(int port = 9876)
 
         if (OperatingSystem.IsLinux())
         {
+            // DISPLAY / WAYLAND_DISPLAY cover desktop Linux directly. WSL_DISTRO_NAME
+            // catches WSL setups where xdg-open delegates to the Windows host
+            // browser via the wslu package even when DISPLAY is unset.
             return !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("DISPLAY"))
-                || !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("WAYLAND_DISPLAY"));
+                || !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("WAYLAND_DISPLAY"))
+                || !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("WSL_DISTRO_NAME"));
         }
 
         return false;
@@ -62,13 +66,13 @@ public sealed class BrowserOAuthFlow(int port = 9876)
     /// Runs the browser flow from an MCP tool by racing the callback listener
     /// against a user-facing confirmation prompt.
     /// </summary>
-    /// <param name="server">The active MCP server used for follow-up elicitation.</param>
+    /// <param name="gate">The elicitation gate used for follow-up confirmation.</param>
     /// <param name="authorizationUrl">The provider authorization URL to open.</param>
     /// <param name="providerName">User-facing provider name such as KakaoTalk or Microsoft.</param>
     /// <param name="ct">Cancellation token for the overall flow.</param>
     /// <returns>The callback outcome, including success, timeout, or cancellation.</returns>
-    public async Task<OAuthCodeResult> RunWithMcpAsync(
-        McpServer server,
+    internal async Task<OAuthCodeResult> RunWithGateAsync(
+        IElicitGate gate,
         string authorizationUrl,
         string providerName,
         CancellationToken ct = default)
@@ -79,7 +83,7 @@ public sealed class BrowserOAuthFlow(int port = 9876)
 
         var browserOpened = TryOpenBrowser(authorizationUrl);
         var listenerTask = WaitForCallbackAsync(listener, timeoutCts.Token);
-        var promptTask = PromptUserToContinueAsync(server, providerName, authorizationUrl, browserOpened, timeoutCts.Token);
+        var promptTask = PromptUserToContinueAsync(gate, providerName, authorizationUrl, browserOpened, timeoutCts.Token);
         var winner = await Task.WhenAny(listenerTask, promptTask);
 
         try
@@ -152,6 +156,10 @@ public sealed class BrowserOAuthFlow(int port = 9876)
         }
     }
 
+    /// <summary>
+    /// Creates and starts the localhost callback listener for the current redirect URI.
+    /// </summary>
+    /// <returns>An active <see cref="HttpListener"/> bound to the callback prefix.</returns>
     HttpListener CreateListener()
     {
         var listener = new HttpListener();
@@ -160,6 +168,10 @@ public sealed class BrowserOAuthFlow(int port = 9876)
         return listener;
     }
 
+    /// <summary>
+    /// Stops the callback listener without surfacing shutdown exceptions.
+    /// </summary>
+    /// <param name="listener">The listener to stop.</param>
     static void StopListener(HttpListener listener)
     {
         try
@@ -172,6 +184,11 @@ public sealed class BrowserOAuthFlow(int port = 9876)
         }
     }
 
+    /// <summary>
+    /// Opens the user's default browser on the local host as a best-effort action.
+    /// </summary>
+    /// <param name="url">The authorization URL to open.</param>
+    /// <returns><see langword="true"/> when the browser launch request was accepted; otherwise <see langword="false"/>.</returns>
     static bool TryOpenBrowser(string url)
     {
         try
@@ -189,6 +206,13 @@ public sealed class BrowserOAuthFlow(int port = 9876)
         }
     }
 
+    /// <summary>
+    /// Waits for the OAuth provider callback and writes a small HTML completion page
+    /// back to the browser before returning the parsed result.
+    /// </summary>
+    /// <param name="listener">The active localhost callback listener.</param>
+    /// <param name="ct">Cancellation token for the wait operation.</param>
+    /// <returns>The parsed authorization-code callback outcome.</returns>
     static async Task<OAuthCodeResult> WaitForCallbackAsync(HttpListener listener, CancellationToken ct)
     {
         var context = await listener.GetContextAsync().WaitAsync(ct);
@@ -202,7 +226,10 @@ public sealed class BrowserOAuthFlow(int port = 9876)
         var bytes = Encoding.UTF8.GetBytes(html);
         context.Response.ContentType = "text/html";
         context.Response.ContentLength64 = bytes.Length;
-        await context.Response.OutputStream.WriteAsync(bytes, ct);
+        // Write the response with an unlinked token so a late grace-window
+        // cancellation cannot truncate the HTML page the user's browser sees.
+        // The payload is small and completes near-instantly.
+        await context.Response.OutputStream.WriteAsync(bytes, CancellationToken.None);
         context.Response.Close();
 
         if (!string.IsNullOrWhiteSpace(code))
@@ -211,22 +238,37 @@ public sealed class BrowserOAuthFlow(int port = 9876)
         return OAuthCodeResult.Failure(error ?? "unknown", errorDescription ?? "Authorization did not return a code.");
     }
 
+    /// <summary>
+    /// Prompts the user through MCP to confirm that the browser-based sign-in
+    /// has completed, while also surfacing the authorization URL as a fallback.
+    /// </summary>
+    /// <param name="gate">The elicitation gate for the active MCP request.</param>
+    /// <param name="providerName">User-facing provider name such as KakaoTalk or Microsoft.</param>
+    /// <param name="authorizationUrl">The authorization URL to display to the user.</param>
+    /// <param name="browserOpened">Whether the browser launch request was accepted by the shell (best-effort).</param>
+    /// <param name="ct">Cancellation token for the elicitation request.</param>
+    /// <returns><see langword="true"/> when the user accepted the prompt; otherwise <see langword="false"/>.</returns>
     static async Task<bool> PromptUserToContinueAsync(
-        McpServer server,
+        IElicitGate gate,
         string providerName,
         string authorizationUrl,
         bool browserOpened,
         CancellationToken ct)
     {
+        // We intentionally avoid claiming the browser "should already be open" —
+        // Process.Start(UseShellExecute=true) returns success as soon as the
+        // shell dispatches the URL, which does not guarantee a window actually
+        // appeared. Always surface the URL so the user can open it themselves
+        // if needed.
         var launchNote = browserOpened
-            ? "Your default browser should already be open on the MCP server host."
-            : "The browser did not open automatically on the MCP server host.";
-        var result = await server.ElicitAsync(new ElicitRequestParams
+            ? "A browser launch request was dispatched on the MCP server host."
+            : "The browser did not launch automatically on the MCP server host.";
+        var result = await gate.ElicitAsync(new ElicitRequestParams
         {
             Message =
                 $"Complete sign-in for {providerName} in your browser.\n\n" +
-                $"{launchNote}\n\n" +
-                $"If needed, open this URL manually on that same machine:\n{authorizationUrl}",
+                $"{launchNote} If no browser window opened, open this URL manually on that same machine:\n{authorizationUrl}\n\n" +
+                "Accept this prompt once sign-in finishes, or decline to cancel.",
             RequestedSchema = new ElicitRequestParams.RequestSchema
             {
                 Properties = new Dictionary<string, ElicitRequestParams.PrimitiveSchemaDefinition>

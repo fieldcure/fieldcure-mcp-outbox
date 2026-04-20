@@ -4,6 +4,7 @@ using System.Text.Json;
 using FieldCure.Mcp.Outbox.Channels;
 using FieldCure.Mcp.Outbox.Configuration;
 using FieldCure.Mcp.Outbox.Credentials;
+using FieldCure.Mcp.Outbox.Interaction;
 using FieldCure.Mcp.Outbox.OAuth;
 using ModelContextProtocol.Protocol;
 using ModelContextProtocol.Server;
@@ -13,6 +14,18 @@ namespace FieldCure.Mcp.Outbox.Tools;
 [McpServerToolType]
 public static class AddChannelTool
 {
+    /// <summary>
+    /// Adds a messaging channel by collecting the required configuration
+    /// through MCP elicitation and, for OAuth channels, a local browser flow.
+    /// </summary>
+    /// <param name="server">The active MCP server instance.</param>
+    /// <param name="store">The channel metadata store.</param>
+    /// <param name="tokenStore">The OAuth token store for browser-based channels.</param>
+    /// <param name="resolver">The shared secret resolver and in-memory cache.</param>
+    /// <param name="type">Channel type such as <c>slack</c>, <c>smtp</c>, <c>microsoft</c>, or <c>kakaotalk</c>.</param>
+    /// <param name="name">Optional display name override for the new channel.</param>
+    /// <param name="cancellationToken">Cancellation token for the interactive setup flow.</param>
+    /// <returns>A JSON payload describing success or failure.</returns>
     [McpServerTool(Name = "add_channel")]
     [Description(
         "Adds a new messaging channel by collecting configuration through MCP elicitation. " +
@@ -30,15 +43,16 @@ public static class AddChannelTool
     {
         try
         {
+            var gate = new McpServerElicitGate(server);
             var normalizedType = type.Trim().ToLowerInvariant();
             return normalizedType switch
             {
-                "slack" => await AddSlackAsync(server, store, resolver, name, cancellationToken),
-                "discord" => await AddDiscordAsync(server, store, resolver, name, cancellationToken),
-                "gmail" or "naver" or "smtp" => await AddSmtpAsync(server, store, resolver, normalizedType, name, cancellationToken),
-                "telegram" => await AddTelegramAsync(server, store, resolver, name, cancellationToken),
-                "microsoft" => await AddMicrosoftAsync(server, store, tokenStore, resolver, name, cancellationToken),
-                "kakaotalk" => await AddKakaoTalkAsync(server, store, tokenStore, resolver, name, cancellationToken),
+                "slack" => await AddSlackAsync(gate, store, resolver, name, cancellationToken),
+                "discord" => await AddDiscordAsync(gate, store, resolver, name, cancellationToken),
+                "gmail" or "naver" or "smtp" => await AddSmtpAsync(gate, store, resolver, normalizedType, name, cancellationToken),
+                "telegram" => await AddTelegramAsync(gate, store, resolver, name, cancellationToken),
+                "microsoft" => await AddMicrosoftAsync(gate, store, tokenStore, resolver, name, cancellationToken),
+                "kakaotalk" => await AddKakaoTalkAsync(gate, store, tokenStore, resolver, name, cancellationToken),
                 _ => JsonSerializer.Serialize(new { status = "error", error = $"Unsupported channel type: {type}" }, McpJson.Tool),
             };
         }
@@ -48,9 +62,12 @@ public static class AddChannelTool
         }
     }
 
-    static async Task<string> AddSlackAsync(McpServer server, ChannelStore store, OutboxSecretResolver resolver, string? name, CancellationToken ct)
+    /// <summary>
+    /// Adds a Slack channel through elicited channel name and bot token.
+    /// </summary>
+    static async Task<string> AddSlackAsync(IElicitGate gate, ChannelStore store, OutboxSecretResolver resolver, string? name, CancellationToken ct)
     {
-        var values = await PromptAsync(server, "Enter the Slack channel name and bot token.",
+        var values = await PromptAsync(gate, "Enter the Slack channel name and bot token.",
         [
             Field("channel_name", "Channel Name", "Slack channel name without leading #"),
             Field("bot_token", "Bot Token", "Slack bot token (xoxb-...)"),
@@ -77,9 +94,12 @@ public static class AddChannelTool
         return JsonSerializer.Serialize(new { status = "ok", channel_id = id }, McpJson.Tool);
     }
 
-    static async Task<string> AddDiscordAsync(McpServer server, ChannelStore store, OutboxSecretResolver resolver, string? name, CancellationToken ct)
+    /// <summary>
+    /// Adds a Discord channel through elicited display name and webhook URL.
+    /// </summary>
+    static async Task<string> AddDiscordAsync(IElicitGate gate, ChannelStore store, OutboxSecretResolver resolver, string? name, CancellationToken ct)
     {
-        var values = await PromptAsync(server, "Enter the Discord channel name and webhook URL.",
+        var values = await PromptAsync(gate, "Enter the Discord channel name and webhook URL.",
         [
             Field("channel_name", "Channel Name", "Display name for this Discord channel"),
             Field("webhook_url", "Webhook URL", "Discord webhook URL"),
@@ -117,7 +137,10 @@ public static class AddChannelTool
         return JsonSerializer.Serialize(new { status = "ok", channel_id = id }, McpJson.Tool);
     }
 
-    static async Task<string> AddSmtpAsync(McpServer server, ChannelStore store, OutboxSecretResolver resolver, string type, string? name, CancellationToken ct)
+    /// <summary>
+    /// Adds either a preset or fully custom SMTP channel through elicited connection details.
+    /// </summary>
+    static async Task<string> AddSmtpAsync(IElicitGate gate, ChannelStore store, OutboxSecretResolver resolver, string type, string? name, CancellationToken ct)
     {
         var existingChannels = await store.LoadAsync();
         var provider = type switch
@@ -131,7 +154,7 @@ public static class AddChannelTool
 
         if (provider == "smtp")
         {
-            var values = await PromptAsync(server, "Enter SMTP channel settings.",
+            var values = await PromptAsync(gate, "Enter SMTP channel settings.",
             [
                 Field("display_name", "Display Name", "Display name for this SMTP channel"),
                 Field("host", "Host", "SMTP host"),
@@ -165,7 +188,7 @@ public static class AddChannelTool
         }
 
         var preset = SmtpPresets.Get(provider)!;
-        var presetValues = await PromptAsync(server, $"Enter the {provider} sender address and app password.",
+        var presetValues = await PromptAsync(gate, $"Enter the {provider} sender address and app password.",
         [
             Field("from", "Email Address", $"{provider} sender address"),
             Field("password", "App Password", $"{provider} app password"),
@@ -191,12 +214,15 @@ public static class AddChannelTool
         return JsonSerializer.Serialize(new { status = "ok", channel_id = id }, McpJson.Tool);
     }
 
-    static async Task<string> AddTelegramAsync(McpServer server, ChannelStore store, OutboxSecretResolver resolver, string? name, CancellationToken ct)
+    /// <summary>
+    /// Adds a Telegram channel and completes the verification flow through elicited prompts.
+    /// </summary>
+    static async Task<string> AddTelegramAsync(IElicitGate gate, ChannelStore store, OutboxSecretResolver resolver, string? name, CancellationToken ct)
     {
         var existingChannels = await store.LoadAsync();
         var id = $"telegram_{existingChannels.Count(c => c.Type == "telegram") + 1}";
 
-        var values = await PromptAsync(server, "Enter the Telegram API credentials and phone number.",
+        var values = await PromptAsync(gate, "Enter the Telegram API credentials and phone number.",
         [
             Field("api_id", "API ID", "Telegram API ID"),
             Field("api_hash", "API Hash", "Telegram API Hash"),
@@ -214,15 +240,21 @@ public static class AddChannelTool
         string? twoFactorPassword = null;
         WTelegram.Helpers.Log = (_, _) => { };
 
+        // WTelegram.Client invokes this callback synchronously from an internal
+        // worker thread to resolve configuration values on demand. We bridge to
+        // the async elicitation gate with GetAwaiter().GetResult() because the
+        // WTelegram API contract is sync-only. Safe here because the callback
+        // runs off the MCP stdio loop, so the blocking wait cannot deadlock the
+        // transport.
         using (var client = new WTelegram.Client(what => what switch
         {
             "api_id" => values["api_id"],
             "api_hash" => values["api_hash"],
             "phone_number" => values["phone"],
-            "verification_code" => verificationCode ??= PromptSingleAsync(
-                server, "verification_code", "Verification Code", "Telegram SMS or app code", "Enter the Telegram verification code.", ct).GetAwaiter().GetResult(),
+                "verification_code" => verificationCode ??= PromptSingleAsync(
+                gate, "verification_code", "Verification Code", "Telegram SMS or app code", "Enter the Telegram verification code.", ct).GetAwaiter().GetResult(),
             "password" => twoFactorPassword ??= PromptSingleAsync(
-                server, "password", "Two-Factor Password", "Telegram two-factor password", "Enter the Telegram two-factor password if prompted.", ct, required: false).GetAwaiter().GetResult(),
+                gate, "password", "Two-Factor Password", "Telegram two-factor password", "Enter the Telegram two-factor password if prompted.", ct, required: false).GetAwaiter().GetResult(),
             "session_pathname" => sessionPath,
             _ => null,
         }))
@@ -244,8 +276,12 @@ public static class AddChannelTool
         return JsonSerializer.Serialize(new { status = "ok", channel_id = id }, McpJson.Tool);
     }
 
+    /// <summary>
+    /// Adds a KakaoTalk channel by eliciting static app secrets and then
+    /// completing a browser-based OAuth flow on the MCP host.
+    /// </summary>
     static async Task<string> AddKakaoTalkAsync(
-        McpServer server,
+        IElicitGate gate,
         ChannelStore store,
         OAuthTokenStore tokenStore,
         OutboxSecretResolver resolver,
@@ -261,7 +297,7 @@ public static class AddChannelTool
             }, McpJson.Tool);
         }
 
-        var values = await PromptAsync(server, "Enter the Kakao REST API key and optional client secret.",
+        var values = await PromptAsync(gate, "Enter the Kakao REST API key and optional client secret.",
         [
             Field("api_key", "REST API Key", "Kakao REST API key"),
             Field("client_secret", "Client Secret", "Optional Kakao client secret", required: false),
@@ -275,7 +311,7 @@ public static class AddChannelTool
         var apiKey = values["api_key"];
         var clientSecret = values.GetValueOrDefault("client_secret");
         var authUrl = $"https://kauth.kakao.com/oauth/authorize?client_id={apiKey}&redirect_uri={Uri.EscapeDataString(redirectUri)}&response_type=code&scope=talk_message";
-        var callback = await oauthFlow.RunWithMcpAsync(server, authUrl, "KakaoTalk", ct);
+        var callback = await oauthFlow.RunWithGateAsync(gate, authUrl, "KakaoTalk", ct);
 
         if (!callback.IsSuccess || string.IsNullOrWhiteSpace(callback.Code))
         {
@@ -350,8 +386,12 @@ public static class AddChannelTool
         }, McpJson.Tool);
     }
 
+    /// <summary>
+    /// Adds a Microsoft channel by eliciting app credentials and then
+    /// completing a browser-based OAuth flow on the MCP host.
+    /// </summary>
     static async Task<string> AddMicrosoftAsync(
-        McpServer server,
+        IElicitGate gate,
         ChannelStore store,
         OAuthTokenStore tokenStore,
         OutboxSecretResolver resolver,
@@ -367,7 +407,7 @@ public static class AddChannelTool
             }, McpJson.Tool);
         }
 
-        var values = await PromptAsync(server, "Enter the Microsoft client ID and client secret.",
+        var values = await PromptAsync(gate, "Enter the Microsoft client ID and client secret.",
         [
             Field("client_id", "Client ID", "Microsoft application (client) ID"),
             Field("client_secret", "Client Secret", "Microsoft client secret"),
@@ -382,7 +422,7 @@ public static class AddChannelTool
         var clientSecret = values["client_secret"];
         var scope = Uri.EscapeDataString("Mail.Send User.Read offline_access");
         var authUrl = $"https://login.microsoftonline.com/common/oauth2/v2.0/authorize?client_id={clientId}&response_type=code&redirect_uri={Uri.EscapeDataString(redirectUri)}&scope={scope}&response_mode=query";
-        var callback = await oauthFlow.RunWithMcpAsync(server, authUrl, "Microsoft", ct);
+        var callback = await oauthFlow.RunWithGateAsync(gate, authUrl, "Microsoft", ct);
 
         if (!callback.IsSuccess || string.IsNullOrWhiteSpace(callback.Code))
         {
@@ -474,21 +514,39 @@ public static class AddChannelTool
         }, McpJson.Tool);
     }
 
+    /// <summary>
+    /// Builds a secret-field descriptor for direct tool prompting where the
+    /// environment variable name is not used as part of the prompt itself.
+    /// </summary>
+    /// <param name="name">The logical field name.</param>
+    /// <param name="title">Short UI label shown to the user.</param>
+    /// <param name="description">Longer field description shown to the user.</param>
+    /// <param name="required">Whether the field is mandatory.</param>
+    /// <returns>A normalized secret-field request.</returns>
     static SecretFieldRequest Field(string name, string title, string description, bool required = true) =>
         new(name, "__unused__", title, description, "", required);
 
+    /// <summary>
+    /// Prompts the user for one or more string fields through the shared
+    /// elicitation gate and returns the accepted values.
+    /// </summary>
+    /// <param name="gate">The elicitation gate for the active MCP request.</param>
+    /// <param name="message">The user-facing prompt message.</param>
+    /// <param name="fields">The fields that should appear in the prompt schema.</param>
+    /// <param name="ct">Cancellation token for the elicitation request.</param>
+    /// <returns>A dictionary of accepted values, or <see langword="null"/> when the prompt was declined or unsupported.</returns>
     static async Task<Dictionary<string, string>?> PromptAsync(
-        McpServer server,
+        IElicitGate gate,
         string message,
         IReadOnlyList<SecretFieldRequest> fields,
         CancellationToken ct)
     {
-        if (server.ClientCapabilities?.Elicitation is null)
+        if (!gate.IsSupported)
             return null;
 
         try
         {
-            var result = await server.ElicitAsync(new ElicitRequestParams
+            var result = await gate.ElicitAsync(new ElicitRequestParams
             {
                 Message = message,
                 RequestedSchema = new ElicitRequestParams.RequestSchema
@@ -537,8 +595,19 @@ public static class AddChannelTool
         }
     }
 
+    /// <summary>
+    /// Prompts the user for a single string field through the shared elicitation gate.
+    /// </summary>
+    /// <param name="gate">The elicitation gate for the active MCP request.</param>
+    /// <param name="fieldName">The logical field name.</param>
+    /// <param name="title">Short UI label shown to the user.</param>
+    /// <param name="description">Longer field description shown to the user.</param>
+    /// <param name="message">The user-facing prompt message.</param>
+    /// <param name="ct">Cancellation token for the elicitation request.</param>
+    /// <param name="required">Whether the field is mandatory.</param>
+    /// <returns>The accepted string value, or <see langword="null"/> when the prompt was declined or unsupported.</returns>
     static async Task<string?> PromptSingleAsync(
-        McpServer server,
+        IElicitGate gate,
         string fieldName,
         string title,
         string description,
@@ -546,7 +615,7 @@ public static class AddChannelTool
         CancellationToken ct,
         bool required = true)
     {
-        var values = await PromptAsync(server, message, [Field(fieldName, title, description, required)], ct);
+        var values = await PromptAsync(gate, message, [Field(fieldName, title, description, required)], ct);
         return values?.GetValueOrDefault(fieldName);
     }
 }
