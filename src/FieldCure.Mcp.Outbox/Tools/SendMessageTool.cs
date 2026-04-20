@@ -3,6 +3,7 @@ using System.Text.Json;
 using FieldCure.Mcp.Outbox.Channels;
 using FieldCure.Mcp.Outbox.Configuration;
 using FieldCure.Mcp.Outbox.Credentials;
+using FieldCure.Mcp.Outbox.Interaction;
 using ModelContextProtocol.Server;
 
 namespace FieldCure.Mcp.Outbox.Tools;
@@ -10,6 +11,22 @@ namespace FieldCure.Mcp.Outbox.Tools;
 [McpServerToolType]
 public static class SendMessageTool
 {
+    /// <summary>
+    /// Sends a message through an existing configured channel, resolving any
+    /// missing secrets through environment variables or MCP elicitation first.
+    /// </summary>
+    /// <param name="server">The active MCP server instance.</param>
+    /// <param name="store">The channel metadata store.</param>
+    /// <param name="tokenStore">The OAuth token store used by browser-based channels.</param>
+    /// <param name="resolver">The shared secret resolver and in-memory cache.</param>
+    /// <param name="httpClientFactory">Factory for HTTP-based channels.</param>
+    /// <param name="channel">Channel ID to send through.</param>
+    /// <param name="message">Message body text.</param>
+    /// <param name="to">Recipient email address for SMTP channels.</param>
+    /// <param name="subject">Email subject for SMTP channels.</param>
+    /// <param name="target_channel">Optional target override such as a Slack channel name.</param>
+    /// <param name="cancellationToken">Cancellation token for the send operation.</param>
+    /// <returns>A JSON payload describing success or failure.</returns>
     [McpServerTool(Name = "send_message", Destructive = true)]
     [Description(
         "Sends a message through a configured channel. " +
@@ -37,7 +54,8 @@ public static class SendMessageTool
         if (metadata == null)
             return JsonSerializer.Serialize(new { success = false, error = $"Channel not found: {channel}" }, McpJson.Tool);
 
-        var resolved = await ResolveSecretsAsync(server, resolver, metadata, cancellationToken);
+        var gate = new McpServerElicitGate(server);
+        var resolved = await ResolveSecretsAsync(gate, resolver, metadata, cancellationToken);
         if (resolved.error is not null)
             return JsonSerializer.Serialize(new { success = false, error = resolved.error }, McpJson.Tool);
 
@@ -69,8 +87,17 @@ public static class SendMessageTool
         }, McpJson.Tool);
     }
 
+    /// <summary>
+    /// Resolves all secrets needed for the specified channel type before the
+    /// concrete channel implementation is constructed.
+    /// </summary>
+    /// <param name="gate">The elicitation gate for the active MCP request.</param>
+    /// <param name="resolver">The shared secret resolver and in-memory cache.</param>
+    /// <param name="metadata">The stored channel metadata.</param>
+    /// <param name="ct">Cancellation token for the resolution flow.</param>
+    /// <returns>The resolved secrets along with any user-facing error message.</returns>
     static async Task<(ChannelResolvedSecrets? secrets, string? error)> ResolveSecretsAsync(
-        McpServer server,
+        IElicitGate gate,
         OutboxSecretResolver resolver,
         ChannelMetadata metadata,
         CancellationToken ct)
@@ -79,7 +106,7 @@ public static class SendMessageTool
         {
             case "slack":
                 return await ResolveSingleSecretAsync(
-                    server,
+                    gate,
                     resolver,
                     metadata,
                     "BOT_TOKEN",
@@ -92,7 +119,7 @@ public static class SendMessageTool
 
             case "telegram":
                 return await ResolveSingleSecretAsync(
-                    server,
+                    gate,
                     resolver,
                     metadata,
                     "API_HASH",
@@ -105,7 +132,7 @@ public static class SendMessageTool
 
             case "smtp":
                 return await ResolveSingleSecretAsync(
-                    server,
+                    gate,
                     resolver,
                     metadata,
                     "PASSWORD",
@@ -118,7 +145,7 @@ public static class SendMessageTool
 
             case "discord":
                 return await ResolveSingleSecretAsync(
-                    server,
+                    gate,
                     resolver,
                     metadata,
                     "WEBHOOK_URL",
@@ -131,7 +158,7 @@ public static class SendMessageTool
 
             case "microsoft":
                 return await ResolveSingleSecretAsync(
-                    server,
+                    gate,
                     resolver,
                     metadata,
                     "CLIENT_SECRET",
@@ -146,7 +173,7 @@ public static class SendMessageTool
             {
                 var apiKeyEnv = OutboxSecretResolver.BuildEnvVarName(metadata.Id, "API_KEY");
                 var clientSecretEnv = OutboxSecretResolver.BuildEnvVarName(metadata.Id, "CLIENT_SECRET");
-                var values = await resolver.ResolveFieldsAsync(server,
+                var values = await resolver.ResolveFieldsAsync(gate,
                 [
                     new SecretFieldRequest(
                         "api_key",
@@ -179,8 +206,23 @@ public static class SendMessageTool
         }
     }
 
+    /// <summary>
+    /// Resolves a single secret field for channel types that only need one
+    /// credential value at send time.
+    /// </summary>
+    /// <param name="gate">The elicitation gate for the active MCP request.</param>
+    /// <param name="resolver">The shared secret resolver and in-memory cache.</param>
+    /// <param name="metadata">The stored channel metadata.</param>
+    /// <param name="envSuffix">The environment variable suffix for the secret.</param>
+    /// <param name="fieldName">The logical field name used in elicitation payloads.</param>
+    /// <param name="title">Short UI label shown to the user.</param>
+    /// <param name="description">Longer field description shown to the user.</param>
+    /// <param name="legacyValue">Legacy plaintext value already stored in the channel metadata.</param>
+    /// <param name="projector">Factory that projects the resolved string into a channel secret object.</param>
+    /// <param name="ct">Cancellation token for the resolution flow.</param>
+    /// <returns>The resolved secret projection along with any user-facing error message.</returns>
     static async Task<(ChannelResolvedSecrets? secrets, string? error)> ResolveSingleSecretAsync(
-        McpServer server,
+        IElicitGate gate,
         OutboxSecretResolver resolver,
         ChannelMetadata metadata,
         string envSuffix,
@@ -192,7 +234,7 @@ public static class SendMessageTool
         CancellationToken ct)
     {
         var envVar = OutboxSecretResolver.BuildEnvVarName(metadata.Id, envSuffix);
-        var values = await resolver.ResolveFieldsAsync(server,
+        var values = await resolver.ResolveFieldsAsync(gate,
         [
             new SecretFieldRequest(
                 fieldName,
