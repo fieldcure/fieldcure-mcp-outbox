@@ -1,6 +1,8 @@
-﻿# FieldCure.Mcp.Outbox
+# FieldCure.Mcp.Outbox
 
 **Multi-channel messaging MCP server** — send messages through Slack, Telegram, Email (Gmail, Naver, Microsoft Graph API), KakaoTalk, and Discord with a single `send_message` tool. One install, one interface, multiple channels.
+
+<!-- mcp-name: io.github.fieldcure/outbox -->
 
 ## Install
 
