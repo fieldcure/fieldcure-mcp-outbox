@@ -1,5 +1,11 @@
 # Release Notes
 
+## v2.1.2 (2026-04-23)
+
+### Fixed
+
+- **KakaoTalk / Microsoft static credentials survive a server restart** — the OAuth add flows (both the legacy CLI `add kakaotalk|microsoft` and the v2.1 MCP `add_channel` path) collected the REST API key / client secret to complete the authorization-code exchange, cached them in `OutboxSecretResolver`'s in-memory map, and discarded them. On the next server start the cache was empty and `SendMessageTool` re-elicited even though the user had just finished the setup flow. Persist the same values into `ChannelMetadata.ApiKey` / `ChannelMetadata.ClientSecret` so `SendMessageTool` resolves them through the existing `LegacyValue` fallback in `channels.json`. OAuth channels now follow the same local-trust persistence convention that Slack/Discord/SMTP/Gmail/Telegram static secrets already use. Channels added before this release still elicit on send — re-add or populate the fields manually to skip the prompt.
+
 ## v2.1.1 (2026-04-20)
 
 - Update MCP package metadata to the latest `server.json` format for NuGet and VS Code integration.

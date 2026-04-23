@@ -8,7 +8,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
 
-    <Version>2.1.1</Version>
+    <Version>2.1.2</Version>
     <PackageId>FieldCure.Mcp.Outbox</PackageId>
 
     <Authors>Jong Hyun Kim</Authors>
@@ -22,7 +22,7 @@
     <PackageTags>mcp;mcp-server;ai;dotnet;email;smtp;slack;telegram;kakaotalk;discord;notification</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageIcon>Logo.png</PackageIcon>
-    <PackageReleaseNotes>v2.1.1: Update MCP package metadata to the latest server.json format for NuGet and VS Code integration.</PackageReleaseNotes>
+    <PackageReleaseNotes>v2.1.2: Persist KakaoTalk/Microsoft static OAuth credentials (REST API key, client secret) to channels.json so send_message no longer re-elicits after a server restart.</PackageReleaseNotes>
 
     <PackageType>McpServer</PackageType>
     <PackAsTool>true</PackAsTool>
