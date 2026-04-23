@@ -105,6 +105,8 @@ public static class KakaoTalkSetup
             Id = id,
             Type = "kakaotalk",
             Name = displayName,
+            ApiKey = apiKey,
+            ClientSecret = string.IsNullOrWhiteSpace(clientSecret) ? null : clientSecret,
         });
 
         ConsoleHelper.PrintSuccess($"Channel '{id}' added.");

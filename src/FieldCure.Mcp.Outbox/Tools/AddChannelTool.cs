@@ -376,6 +376,8 @@ public static class AddChannelTool
             Id = id,
             Type = "kakaotalk",
             Name = displayName,
+            ApiKey = apiKey,
+            ClientSecret = string.IsNullOrWhiteSpace(clientSecret) ? null : clientSecret,
         });
 
         return JsonSerializer.Serialize(new
@@ -504,6 +506,7 @@ public static class AddChannelTool
             From = userEmail,
             Provider = "microsoft",
             ClientId = clientId,
+            ClientSecret = clientSecret,
         });
 
         return JsonSerializer.Serialize(new

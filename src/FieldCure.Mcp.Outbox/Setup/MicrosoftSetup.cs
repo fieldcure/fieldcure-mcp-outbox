@@ -133,6 +133,7 @@ public static class MicrosoftSetup
             From = userEmail,
             Provider = "microsoft",
             ClientId = clientId,
+            ClientSecret = clientSecret,
         });
 
         ConsoleHelper.PrintSuccess($"Channel '{id}' added.");
